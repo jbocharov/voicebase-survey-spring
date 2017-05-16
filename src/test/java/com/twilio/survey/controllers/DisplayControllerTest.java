@@ -1,12 +1,15 @@
 package com.twilio.survey.controllers;
 
 import com.twilio.survey.SurveyJavaApplication;
+import com.twilio.survey.models.Participant;
 import com.twilio.survey.models.Question;
 import com.twilio.survey.models.Response;
 import com.twilio.survey.models.Survey;
+import com.twilio.survey.repositories.ParticipantRepository;
 import com.twilio.survey.repositories.QuestionRepository;
 import com.twilio.survey.repositories.ResponseRepository;
 import com.twilio.survey.repositories.SurveyRepository;
+import com.twilio.survey.services.ParticipantService;
 import com.twilio.survey.services.QuestionService;
 import com.twilio.survey.services.ResponseService;
 import com.twilio.survey.services.SurveyService;
@@ -35,18 +38,23 @@ public class DisplayControllerTest extends BaseControllerTest {
     private SurveyRepository surveyRepository;
     @Autowired
     private ResponseRepository responseRepository;
+    @Autowired
+    private ParticipantRepository participantRepository;
     private QuestionService questionService;
     private SurveyService surveyService;
     private ResponseService responseService;
+    private ParticipantService participantService;
 
     @Before
     public void before() {
         questionService = new QuestionService(questionRepository);
         surveyService = new SurveyService(surveyRepository);
         responseService = new ResponseService(responseRepository);
+        participantService = new ParticipantService(participantRepository);
         questionService.deleteAll();
         surveyService.deleteAll();
         responseService.deleteAll();
+        participantService.deleteAll();
     }
 
     @Test
@@ -64,7 +72,8 @@ public class DisplayControllerTest extends BaseControllerTest {
     public void showResponses() throws Exception {
         Survey survey = surveyService.create(new Survey("New Title Survey", new Date()));
         Question question = questionService.save(new Question("Numeric Question", "numeric", survey, new Date()));
-        responseService.save(new Response("test number", "SESSION_SID", question, new Date()));
+        Participant participant = participantService.save(new Participant("+1415XXXXX12", "+14155551212", new Date()));
+        responseService.save(new Response("test number", "SESSION_SID", question, participant, new Date()));
 
         String httpResponse = get("/");
 
@@ -75,7 +84,8 @@ public class DisplayControllerTest extends BaseControllerTest {
     public void showTextResponses() throws Exception {
         Survey survey = surveyService.create(new Survey("New Title Survey", new Date()));
         Question question = questionService.save(new Question("Text Question", "text", survey, new Date()));
-        responseService.save(new Response("http://recording_url", "SESSION_SID", question, new Date()));
+        Participant participant = participantService.save(new Participant("+1415XXXXX12", "+14155551212", new Date()));
+        responseService.save(new Response("http://recording_url", "SESSION_SID", question, participant, new Date()));
 
         String httpResponse = get("/");
 
@@ -86,7 +96,8 @@ public class DisplayControllerTest extends BaseControllerTest {
     public void showYesNoResponses() throws Exception {
         Survey survey = surveyService.create(new Survey("New Title Survey", new Date()));
         Question question = questionService.save(new Question("YesNo Question", "yes-no", survey, new Date()));
-        responseService.save(new Response("0", "SESSION_SID", question, new Date()));
+        Participant participant = participantService.save(new Participant("+1415XXXXX12", "+14155551212", new Date()));
+        responseService.save(new Response("0", "SESSION_SID", question, participant, new Date()));
 
         String httpResponse = get("/");
 

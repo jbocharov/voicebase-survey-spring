@@ -1,5 +1,6 @@
 package com.twilio.survey.controllers;
 
+import com.twilio.survey.models.Participant;
 import com.twilio.survey.models.Question;
 import com.twilio.survey.models.Response;
 import com.twilio.survey.models.Survey;
@@ -41,8 +42,9 @@ public class ResponseController {
         this.responseService = new ResponseService(responseRepository);
 
         Question currentQuestion = getQuestionFromRequest(request);
+        Participant currentParticipant = getParticipantFromRequest(request);
         Survey survey = currentQuestion.getSurvey();
-        persistResponse(new ResponseParser(currentQuestion, request).parse());
+        persistResponse(new ResponseParser(currentQuestion, currentParticipant, request).parse());
 
         if (survey.isLastQuestion(currentQuestion)) {
             String message = "Tank you for taking the " + survey.getTitle() + " survey. Good Bye";
@@ -71,5 +73,9 @@ public class ResponseController {
 
     private Question getQuestionFromRequest(HttpServletRequest request) {
         return questionService.find(Long.parseLong(request.getParameter("qid")));
+    }
+
+    private Participant getParticipantFromRequest(HttpServletRequest request) {
+        return null;
     }
 }

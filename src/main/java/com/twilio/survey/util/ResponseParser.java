@@ -1,5 +1,6 @@
 package com.twilio.survey.util;
 
+import com.twilio.survey.models.Participant;
 import com.twilio.survey.models.Question;
 import com.twilio.survey.models.Response;
 
@@ -12,10 +13,12 @@ import java.util.Date;
  */
 public class ResponseParser {
     private Question question;
+    private Participant participant;
     private HttpServletRequest request;
 
-    public ResponseParser(Question question, HttpServletRequest request) {
+    public ResponseParser(Question question, Participant participant, HttpServletRequest request) {
         this.question = question;
+        this.participant = participant;
         this.request = request;
     }
 
@@ -48,7 +51,7 @@ public class ResponseParser {
         }
         String content = request.getParameter(contentKey);
         String sessionSid = request.getParameter(sessionKey);
-        return new Response(content, sessionSid, question, new Date());
+        return new Response(content, sessionSid, question, participant, new Date());
     }
 
 
