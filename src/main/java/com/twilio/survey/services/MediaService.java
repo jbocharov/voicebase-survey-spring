@@ -1,0 +1,51 @@
+package com.twilio.survey.services;
+
+/**
+ * Created by jbocharov on 5/16/17.
+ */
+
+import com.twilio.survey.models.Media;
+import com.twilio.survey.models.Participant;
+import com.twilio.survey.repositories.MediaRepository;
+import com.twilio.survey.repositories.TranscriptRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class MediaService {
+    private MediaRepository mediaRepository;
+
+    @Autowired
+    public MediaService(MediaRepository mediaRepository) { this.mediaRepository = mediaRepository; }
+
+    public Media save(Media media) {
+        mediaRepository.save(media);
+        return media;
+    }
+
+    public void delete(Long id) {
+        mediaRepository.delete(id);
+    }
+
+    public void deleteAll() {
+        mediaRepository.deleteAll();
+    }
+
+    public Long count() {
+        return mediaRepository.count();
+    }
+
+    public List<Media> findAll() {
+        return mediaRepository.findAll();
+    }
+
+    public Media find(Long id) {
+        return mediaRepository.findOne(id);
+    }
+
+    public List<Media> findByParticipant(Participant participant) {
+        return mediaRepository.findByParticipant(participant);
+    }
+}
