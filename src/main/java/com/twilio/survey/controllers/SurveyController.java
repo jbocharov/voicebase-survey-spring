@@ -1,8 +1,11 @@
 package com.twilio.survey.controllers;
 
+import com.twilio.survey.models.Participant;
 import com.twilio.survey.models.Survey;
 import com.twilio.survey.repositories.SurveyRepository;
+import com.twilio.survey.services.ParticipantService;
 import com.twilio.survey.services.SurveyService;
+import com.twilio.survey.util.ParticipantParser;
 import com.twilio.survey.util.TwiMLUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -18,6 +21,9 @@ public class SurveyController {
     @Autowired
     private SurveyRepository surveyRepository;
     private SurveyService surveyService;
+
+    @Autowired
+    private ParticipantService participantService;
 
     public SurveyController() {
     }
@@ -52,6 +58,7 @@ public class SurveyController {
         HttpSession session = request.getSession(false);
 
         if (lastSurvey != null) {
+            ensureParticipantFromRequest(request);
             if (session == null || session.isNew()) {
                 // New session,
                 response.getWriter().print(getFirstQuestionRedirect(lastSurvey, request));
@@ -114,5 +121,10 @@ public class SurveyController {
 
     private Long getQuestionIdFromSession(HttpSession session) {
         return (Long) session.getAttribute("questionId");
+    }
+
+    private Participant ensureParticipantFromRequest(HttpServletRequest request) {
+        final Participant participant = participantService.save(ParticipantParser.parseParticipant(request));
+        return participant;
     }
 }
