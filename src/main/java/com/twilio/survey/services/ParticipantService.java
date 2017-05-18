@@ -44,7 +44,9 @@ public class ParticipantService {
     }
 
     public Participant getByUnmaskedPhoneNumber(String unmaskedPhoneNumber) throws IndexOutOfBoundsException {
-        return participantRepository.getByUnmaskedPhoneNumber(unmaskedPhoneNumber);
+        final List<Participant> participants = participantRepository.getByUnmaskedPhoneNumber(unmaskedPhoneNumber);
+
+        return participants.isEmpty() ? null : participants.get(0);
     }
 
     public List<Participant> getByPhoneNumber(String phoneNumber) { return participantRepository.getByPhoneNumber(phoneNumber); }

@@ -39,7 +39,8 @@ public class SurveyController {
         Survey lastSurvey = surveyService.findLast();
 
         if (lastSurvey != null) {
-            response.getWriter().print(getFirstQuestionRedirect(lastSurvey, request));
+            Participant participant = ensureParticipantFromRequest(request);
+            response.getWriter().print(getFirstQuestionRedirect(lastSurvey, request, participant));
         } else {
             response.getWriter().print(getHangupResponse(request));
         }
@@ -58,13 +59,13 @@ public class SurveyController {
         HttpSession session = request.getSession(false);
 
         if (lastSurvey != null) {
-            ensureParticipantFromRequest(request);
+            Participant participant = ensureParticipantFromRequest(request);
             if (session == null || session.isNew()) {
                 // New session,
-                response.getWriter().print(getFirstQuestionRedirect(lastSurvey, request));
+                response.getWriter().print(getFirstQuestionRedirect(lastSurvey, request, participant));
             } else {
                 // Ongoing session, redirect to ResponseController to save it's answer.
-                response.getWriter().print(getSaveResponseRedirect(session));
+                response.getWriter().print(getSaveResponseRedirect(session, participant));
             }
         } else {
             // No survey
@@ -73,8 +74,11 @@ public class SurveyController {
         response.setContentType("application/xml");
     }
 
-    private String getSaveResponseRedirect(HttpSession session) throws Exception {
-        String saveURL = "/save_response?qid=" + getQuestionIdFromSession(session);
+    private String getSaveResponseRedirect(HttpSession session, Participant participant) throws Exception {
+        String saveURL = "/save_response?qid="
+                + getQuestionIdFromSession(session)
+                + "&pid="
+                + participant.getId().toString();
         return TwiMLUtil.redirectPost(saveURL);
     }
 
@@ -85,9 +89,9 @@ public class SurveyController {
      * @param request HttpServletRequest request
      * @return TwiMLResponse
      */
-    private String getFirstQuestionRedirect(Survey survey, HttpServletRequest request) throws Exception {
+    private String getFirstQuestionRedirect(Survey survey, HttpServletRequest request, Participant participant) throws Exception {
         String welcomeMessage = "Welcome to the " + survey.getTitle() + " survey";
-        String questionURL = "/question?survey=" + survey.getId() + "&question=1";
+        String questionURL = "/question?survey=" + survey.getId() + "&question=1&pid=" + participant.getId().toString();
         if (request.getParameter("MessageSid") != null) {
             return TwiMLUtil.messagingResponseWithRedirect(welcomeMessage, questionURL);
         } else {
@@ -124,7 +128,14 @@ public class SurveyController {
     }
 
     private Participant ensureParticipantFromRequest(HttpServletRequest request) {
-        final Participant participant = participantService.save(ParticipantParser.parseParticipant(request));
-        return participant;
+        final Participant requestParticipant = ParticipantParser.parseParticipant(request);
+
+        final Participant savedParticipant = participantService.getByUnmaskedPhoneNumber(
+                requestParticipant.getUnmaskedPhoneNumber()
+        );
+
+        return (savedParticipant != null)
+                ? savedParticipant
+                : participantService.save(ParticipantParser.parseParticipant(request));
     }
 }

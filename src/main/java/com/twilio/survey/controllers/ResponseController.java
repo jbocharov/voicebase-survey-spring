@@ -6,6 +6,7 @@ import com.twilio.survey.models.Response;
 import com.twilio.survey.models.Survey;
 import com.twilio.survey.repositories.QuestionRepository;
 import com.twilio.survey.repositories.ResponseRepository;
+import com.twilio.survey.services.ParticipantService;
 import com.twilio.survey.services.QuestionService;
 import com.twilio.survey.services.ResponseService;
 import com.twilio.survey.util.ResponseParser;
@@ -27,6 +28,9 @@ public class ResponseController {
     @Autowired
     private ResponseRepository responseRepository;
     private ResponseService responseService;
+
+    @Autowired
+    private ParticipantService participantService;
 
     public ResponseController() {
     }
@@ -76,6 +80,6 @@ public class ResponseController {
     }
 
     private Participant getParticipantFromRequest(HttpServletRequest request) {
-        return null;
+        return participantService.find(Long.parseLong(request.getParameter("pid")));
     }
 }

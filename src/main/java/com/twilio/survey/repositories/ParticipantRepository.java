@@ -11,6 +11,6 @@ import java.util.List;
 
 @Repository
 public interface ParticipantRepository extends JpaRepository<Participant, Long> {
-    Participant getByUnmaskedPhoneNumber(String unmaskedPhoneNumber);
+    List<Participant> getByUnmaskedPhoneNumber(String unmaskedPhoneNumber);
     List<Participant> getByPhoneNumber(String phoneNumber);
 }

@@ -1,8 +1,10 @@
 package com.twilio.survey.controllers;
 
+import com.twilio.survey.models.Participant;
 import com.twilio.survey.models.Question;
 import com.twilio.survey.models.Survey;
 import com.twilio.survey.repositories.SurveyRepository;
+import com.twilio.survey.services.ParticipantService;
 import com.twilio.survey.services.SurveyService;
 import com.twilio.survey.util.QuestionBuilder;
 import com.twilio.survey.util.SMSQuestionBuilder;
@@ -22,6 +24,9 @@ public class QuestionController {
     private SurveyRepository surveyRepository;
     private SurveyService surveyService;
 
+    @Autowired
+    private ParticipantService participantService;
+
     public QuestionController() {
     }
 
@@ -32,6 +37,7 @@ public class QuestionController {
     public void show(HttpServletRequest request, HttpServletResponse response) throws Exception {
         this.surveyService = new SurveyService(surveyRepository);
         Survey survey = surveyService.find(Long.parseLong(request.getParameter("survey")));
+        final Participant participant = participantService.getByUnmaskedPhoneNumber(request.getParameter("From"));
 
         Question currentQuestion = survey.getQuestionByNumber(Integer.parseInt(request.getParameter("question")));
         QuestionBuilder builder = getQuestionHandler(currentQuestion, request);
