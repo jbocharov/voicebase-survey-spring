@@ -5,6 +5,7 @@ package com.twilio.survey.models;
  */
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -45,6 +46,12 @@ public class Vocabulary {
         this.date = date;
     }
 
+    public Vocabulary(Participant participant, Date date) {
+        this.participant = participant;
+        this.terms = new ArrayList<>();
+        this.date = date;
+    }
+
     public List<Term> getTerms() {
         return terms;
     }
@@ -67,5 +74,13 @@ public class Vocabulary {
 
     public void setDate(Date date) {
         this.date = date;
+    }
+
+    public Participant getParticipant() {
+        return participant;
+    }
+
+    public void setParticipant(Participant participant) {
+        this.participant = participant;
     }
 }

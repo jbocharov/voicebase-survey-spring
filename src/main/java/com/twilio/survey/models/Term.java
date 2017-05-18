@@ -52,6 +52,12 @@ public class Term {
         this.date = date;
     }
 
+    public Term(String term, Vocabulary vocabulary, Date date) {
+        this.term = term;
+        this.vocabulary = vocabulary;
+        this.date = date;
+    }
+
     public Long getId() {
         return id;
     }

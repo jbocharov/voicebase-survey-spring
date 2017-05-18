@@ -2,6 +2,7 @@ package com.twilio.survey.util;
 
 import com.twilio.survey.models.Question;
 import com.twilio.survey.models.Survey;
+import com.twilio.survey.models.Vocabulary;
 import com.twilio.twiml.Body;
 import com.twilio.twiml.Gather;
 import com.twilio.twiml.Hangup;
@@ -17,8 +18,10 @@ import com.twilio.twiml.VoiceResponse;
 
 public class TwiMLUtil {
 
-    public static String redirect(int nextQuestionNumber, Survey survey) throws TwiMLException {
-        String nextQuestionURL = "/question?survey=" + survey.getId() + "&question=" + nextQuestionNumber;
+    public static String redirect(int nextQuestionNumber, Survey survey, Vocabulary vocabulary) throws TwiMLException {
+        String nextQuestionURL = "/question?survey=" + survey.getId()
+                + "&question=" + nextQuestionNumber
+                + "&vid=" + vocabulary.getId().toString();
         return redirect(nextQuestionURL, Method.GET).toXml();
     }
 
