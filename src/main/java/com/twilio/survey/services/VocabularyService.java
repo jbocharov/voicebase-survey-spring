@@ -43,7 +43,7 @@ public class VocabularyService {
         return vocabularyRepository.findOne(id);
     }
 
-    public Vocabulary findByParticipant(Participant participant) {
+    public List<Vocabulary> findByParticipant(Participant participant) {
         return vocabularyRepository.getByParticipant(participant);
     }
 }

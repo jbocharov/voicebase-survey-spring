@@ -10,6 +10,7 @@ import com.twilio.survey.services.SurveyService;
 import com.twilio.survey.services.VocabularyService;
 import com.twilio.survey.util.ParticipantParser;
 import com.twilio.survey.util.TwiMLUtil;
+import com.twilio.twiml.TwiML;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,6 +36,22 @@ public class SurveyController {
     private VocabularyService vocabularyService;
 
     public SurveyController() {
+    }
+
+    /**
+     * Message endpoint; Welcomes a user and encourages them to leave a message with their custom vocabulary.
+     */
+    @RequestMapping(value = "/message/call", method = RequestMethod.GET)
+    public void message(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        final Participant participant = ensureParticipantFromRequest(request);
+        response.getWriter().print(getLeaveAMessageResponse(request, participant));
+        response.setContentType("application/xml");
+    }
+
+    @RequestMapping(value = "/message/recording", method = RequestMethod.POST)
+    public void recording(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        response.getWriter().print("");
+        response.setContentType("application/xml");
     }
 
     /**
@@ -135,6 +152,12 @@ public class SurveyController {
         } else {
             return TwiMLUtil.voiceResponse(errorMessage);
         }
+    }
+
+    private String getLeaveAMessageResponse(HttpServletRequest request, Participant participant) throws Exception {
+        final String message = "Please leave a message at the tone";
+        final String recordingUrl = "/message/recording?pid=" + participant.getId().toString();
+        return TwiMLUtil.voiceResponseWithRecordingCallback(message, recordingUrl);
     }
 
     private void cleanSession(HttpServletRequest request) {

@@ -83,4 +83,19 @@ public class TwiMLUtil {
                 .build()
                 .toXml();
     }
+
+    public static String voiceResponseWithRecordingCallback(String message, String recordingUrl) throws TwiMLException {
+        return new VoiceResponse.Builder()
+                .say(new Say.Builder(message).build())
+                .record(new Record.Builder()
+                        .action(recordingUrl)
+                        .method(Method.POST)
+                        .finishOnKey("#")
+                        .maxLength(60)
+                        .build()
+                )
+                .hangup(new Hangup())
+                .build()
+                .toXml();
+    }
 }
