@@ -65,6 +65,8 @@ public class AppSetup {
     return env.get("DATABASE_URL");
   }
 
+  public String getReturnPathURL() { return env.get("RETURN_PATH_URL"); }
+
   /**
    * Fetches the environment variable TWILIO_DISABLE_DB_SSL. This needs to be
    * set to true if the database doesn't have SSL enabled
