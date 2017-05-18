@@ -40,21 +40,7 @@ public class SurveyController {
     public SurveyController() {
     }
 
-    /**
-     * Message endpoint; Welcomes a user and encourages them to leave a message with their custom vocabulary.
-     */
-    @RequestMapping(value = "/message/call", method = RequestMethod.GET)
-    public void message(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        final Participant participant = ensureParticipantFromRequest(request);
-        response.getWriter().print(getLeaveAMessageResponse(request, participant));
-        response.setContentType("application/xml");
-    }
 
-    @RequestMapping(value = "/message/recording", method = RequestMethod.POST)
-    public void recording(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        response.getWriter().print("");
-        response.setContentType("application/xml");
-    }
 
     /**
      * Calls endpoint; Welcomes a user and redirects to the question controller if there is a survey to be answered.
@@ -156,11 +142,6 @@ public class SurveyController {
         }
     }
 
-    private String getLeaveAMessageResponse(HttpServletRequest request, Participant participant) throws Exception {
-        final String message = "Please leave a message at the tone";
-        final String recordingUrl = "/message/recording?pid=" + participant.getId().toString();
-        return TwiMLUtil.voiceResponseWithRecordingCallback(message, recordingUrl);
-    }
 
     private void cleanSession(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
