@@ -46,4 +46,22 @@ public class VocabularyService {
     public List<Vocabulary> findByParticipant(Participant participant) {
         return vocabularyRepository.getByParticipant(participant);
     }
+
+    public Vocabulary findOneLatestByParticipant(Participant participant) {
+        final List<Vocabulary> vocabularies = findByParticipant(participant);
+
+        if (vocabularies.isEmpty()) {
+            return null;
+        }
+
+        Vocabulary latestVocabulary = vocabularies.get(0);
+
+        for (Vocabulary vocabulary : vocabularies) {
+            if (vocabulary != null && vocabulary.getDate().after(latestVocabulary.getDate())) {
+                latestVocabulary = vocabulary;
+            }
+        }
+
+        return latestVocabulary;
+    }
 }

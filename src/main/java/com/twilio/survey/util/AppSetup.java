@@ -67,6 +67,9 @@ public class AppSetup {
 
   public String getReturnPathURL() { return env.get("RETURN_PATH_URL"); }
 
+  public String getVoiceBaseToken() { return env.get("VOICEBASE_TOKEN"); }
+
+
   /**
    * Fetches the environment variable TWILIO_DISABLE_DB_SSL. This needs to be
    * set to true if the database doesn't have SSL enabled

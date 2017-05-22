@@ -1,10 +1,8 @@
 package com.twilio.survey.controllers;
 
 import com.twilio.survey.models.Participant;
-import com.twilio.survey.services.MediaService;
-import com.twilio.survey.services.ParticipantService;
-import com.twilio.survey.services.TranscriptService;
-import com.twilio.survey.services.VocabularyService;
+import com.twilio.survey.models.Vocabulary;
+import com.twilio.survey.services.*;
 import com.twilio.survey.util.AppSetup;
 import com.twilio.survey.util.ParticipantParser;
 import com.twilio.survey.util.TwiMLUtil;
@@ -12,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -37,6 +36,12 @@ public class MessageController {
     @Autowired
     private TranscriptService transcriptService;
 
+    @Autowired
+    private VocabularyService vocabularyService;
+
+    @Autowired
+    private VoiceBaseService voiceBaseService;
+
     public MessageController() {
 
     }
@@ -56,14 +61,19 @@ public class MessageController {
         final String recordingUrl = getRecordingUrl(request);
         final Long recordingDuration = getRecordingDuration(request);
         final String returnPathUrl = new AppSetup().getReturnPathURL();
+        final Participant participant = ensureParticipantFromRequest(request);
+        final Vocabulary vocabulary = vocabularyService.findOneLatestByParticipant(participant);
 
-        logger.info("Got a recording link url={}, duration={}, returnPathUrl={}", recordingUrl, recordingDuration, returnPathUrl);
+        logger.info("Got a recording link url={}, duration={}, returnPathUrl={}, vocabulary={}",
+                recordingUrl, recordingDuration, returnPathUrl, vocabulary);
+
+        final String mediaId = voiceBaseService.upload(recordingUrl, returnPathUrl, participant, vocabulary);
         response.getWriter().print("");
         response.setContentType("application/xml");
     }
 
     protected String getLeaveAMessageResponse(HttpServletRequest request, Participant participant) throws Exception {
-        final String message = "Please leave a message at the tone";
+        final String message = "Please leave a message at the tone and tell us what your learned today. Be creative and use the unique terms you provided";
         final String recordingUrl = "/message/recording?pid=" + participant.getId().toString();
         return TwiMLUtil.voiceResponseWithRecordingCallback(message, recordingUrl);
     }
