@@ -1,5 +1,6 @@
 package com.twilio.survey.controllers;
 
+import com.twilio.survey.models.Media;
 import com.twilio.survey.models.Participant;
 import com.twilio.survey.models.Vocabulary;
 import com.twilio.survey.services.*;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Date;
 
 /**
  * Created by jbocharov on 5/18/17.
@@ -67,7 +69,22 @@ public class MessageController {
         logger.info("Got a recording link url={}, duration={}, returnPathUrl={}, vocabulary={}",
                 recordingUrl, recordingDuration, returnPathUrl, vocabulary);
 
-        final String mediaId = voiceBaseService.upload(recordingUrl, returnPathUrl, participant, vocabulary);
+        final String voicebaseMediaId = voiceBaseService.upload(recordingUrl, returnPathUrl, participant, vocabulary);
+        logger.info("Started vocab transcription voicebaseMediaId={}, url={}, duration={}, returnPathUrl={}, vocabulary={}",
+                voicebaseMediaId, recordingUrl, recordingDuration, returnPathUrl, vocabulary);
+        final String novocabMediaId = voiceBaseService.upload(recordingUrl, returnPathUrl, participant);
+
+        logger.info("Started no-vocab transcription novocabMediaId={}, url={}, duration={}, returnPathUrl={}, vocabulary={}",
+                novocabMediaId, recordingUrl, recordingDuration, returnPathUrl, vocabulary);
+
+        final Media media = mediaService.save(
+                new Media(recordingUrl, voicebaseMediaId, novocabMediaId, participant, vocabulary, new Date())
+        );
+
+        logger.info(
+                "Created media databaseMediaId={}, voicebaseMediaId={}, novocabMediaId={}, url={}, duration={}, returnPathUrl={}, vocabulary={}",
+                media.getId().toString(), voicebaseMediaId, novocabMediaId, recordingUrl, recordingDuration, returnPathUrl, vocabulary
+        );
         response.getWriter().print("");
         response.setContentType("application/xml");
     }

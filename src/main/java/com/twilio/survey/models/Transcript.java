@@ -40,6 +40,9 @@ public class Transcript {
     @Column(name = "transcript_text")
     private String transcriptText;
 
+    @Column(name = "novocab_text")
+    private String novocabText;
+
     public Transcript() {
     }
 
@@ -86,5 +89,13 @@ public class Transcript {
 
     public void setTranscriptText(String transcriptText) {
         this.transcriptText = transcriptText;
+    }
+
+    public String getNovocabText() {
+        return novocabText;
+    }
+
+    public void setNovocabText(String novocabText) {
+        this.novocabText = novocabText;
     }
 }

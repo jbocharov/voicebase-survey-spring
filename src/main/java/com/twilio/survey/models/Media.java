@@ -33,6 +33,12 @@ public class Media {
     @Column(name = "voicebase_media_id")
     private String voicebaseMediaId;
 
+    @Column(name = "novocab_media_id")
+    private String novocabMediaId;
+
+    @Column(name = "recording_url")
+    private String recordingUrl;
+
     @Column(name = "date")
     private Date date;
 
@@ -47,8 +53,19 @@ public class Media {
     public Media() {
     }
 
-    public Media(String voicebaseMediaId, Date date) {
+    public Media(String recordingUrl, String voicebaseMediaId, String novocabMediaId, Date date) {
+        this.recordingUrl = recordingUrl;
         this.voicebaseMediaId = voicebaseMediaId;
+        this.novocabMediaId = novocabMediaId;
+        this.date = date;
+    }
+
+    public Media(String recordingUrl, String voicebaseMediaId, String novocabMediaId, Participant participant, Vocabulary vocabulary, Date date) {
+        this.recordingUrl = recordingUrl;
+        this.voicebaseMediaId = voicebaseMediaId;
+        this.novocabMediaId = novocabMediaId;
+        this.participant = participant;
+        this.vocabulary = vocabulary;
         this.date = date;
     }
 
@@ -98,5 +115,13 @@ public class Media {
 
     public void setTranscripts(List<Transcript> transcripts) {
         this.transcripts = transcripts;
+    }
+
+    public String getNovocabMediaId() {
+        return novocabMediaId;
+    }
+
+    public void setNovocabMediaId(String novocabMediaId) {
+        this.novocabMediaId = novocabMediaId;
     }
 }
