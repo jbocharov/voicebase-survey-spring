@@ -39,8 +39,8 @@ public class VoiceBaseService {
         final String participantId = participant.getId().toString();
         final String vocabularyId = (vocabulary != null) ? vocabulary.getId().toString() : null;
 
-        final String callbackUrl = returnPath + "/messages/callback?"
-                + "pid=" + participantId
+        final String callbackUrl = returnPath
+                + "?pid=" + participantId
                 + (
                     (vocabularyId != null) ? "&vid=" + vocabularyId : ""
                 );
@@ -58,8 +58,49 @@ public class VoiceBaseService {
                 mediaId, recordingUrl, participantId, vocabularyId, callbackUrl);
 
         return mediaId;
+    }
+
+    public CallbackResult getTranscriptFromCallback(final String callbackResponseJson) throws IOException {
+        Preconditions.checkNotNull(callbackResponseJson);
+
+        final VoiceBaseV2BetaUnirestClient.CallbackResponseEntity entity =
+                voiceBaseClient().parseCallback(callbackResponseJson);
+
+        if (! entity.callbackStatus.success) {
+            throw new IllegalArgumentException("Callback is not a success callback");
+        }
+
+        VoiceBaseV2BetaUnirestClient.CallbackMediaEntity mediaEntity = entity.callbackMedia;
+
+        if (mediaEntity == null) {
+            throw new IllegalArgumentException("Callback has no media entity");
+        }
+
+        if (mediaEntity.mediaId == null) {
+            throw new IllegalArgumentException("mediaId is null");
+        }
+
+        final String mediaId = mediaEntity.mediaId;
 
 
+        VoiceBaseV2BetaUnirestClient.CallbackTranscriptsEntity transcriptsEntity = mediaEntity.callbackTranscripts;
+
+        if (transcriptsEntity.text == null) {
+            throw new IllegalArgumentException("text is null");
+        }
+
+        return new CallbackResult(mediaId, transcriptsEntity.text);
+    }
+
+    public static class CallbackResult {
+
+        public CallbackResult(String mediaId, String text) {
+            this.mediaId = mediaId;
+            this.text = text;
+        }
+
+        final public String mediaId;
+        final public String text;
     }
 
     protected static List<String> getListOfStringTerms(Vocabulary vocabulary) {

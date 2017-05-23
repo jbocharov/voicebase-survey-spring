@@ -25,7 +25,6 @@ import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.misc.IOUtils;
 
 
 /**
@@ -46,9 +45,15 @@ public class VoiceBaseV2BetaUnirestClient {
         Preconditions.checkNotNull(recordingUrl);
         Preconditions.checkNotNull(callbackUrl);
 
-        final Configuration configuration = ((customVocabularyTerms != null) && (! customVocabularyTerms.isEmpty()))
-                ? Configuration.defaultConfiguration()
-                : Configuration.withCustomVocabulary(customVocabularyTerms);
+        final String method = "POST";
+        final List<String> includes = Lists.newArrayList("transcripts");
+        final Configuration configuration = Configuration
+                .defaultConfiguration()
+                .withCallback(callbackUrl, method, includes);
+
+        if ((customVocabularyTerms != null) && (! customVocabularyTerms.isEmpty())) {
+            configuration.withCustomVocabulary(customVocabularyTerms);
+        }
 
         final ObjectWriter ow = new ObjectMapper().writer();
 
@@ -86,6 +91,15 @@ public class VoiceBaseV2BetaUnirestClient {
                     e.toString(), configurationString, recordingUrl, callbackUrl);
             throw new IllegalStateException(e);
         }
+    }
+
+    public CallbackResponseEntity parseCallback(String callbackResponseJson) throws IOException {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        final CallbackResponseEntity callbackResponseEntity = objectMapper.readValue(
+                callbackResponseJson, CallbackResponseEntity.class
+        );
+
+        return callbackResponseEntity;
     }
 
     protected static void writeToAutoDeletingTempFile(AutoDeletingTempFile tempFile, String content) throws FileNotFoundException {
@@ -159,11 +173,11 @@ public class VoiceBaseV2BetaUnirestClient {
          * @return
          */
         public static Configuration defaultConfiguration() {
-            return new Configuration(new ConfigurationEntity(null));
+            return new Configuration(new ConfigurationEntity());
         }
 
         /**
-         * Convenience constructor: builds a configuration including specified custom terms:
+         * Convenience: builds a configuration including specified custom terms:
          * {
          *   "configuration": {
          *     "transcripts": {
@@ -178,15 +192,65 @@ public class VoiceBaseV2BetaUnirestClient {
          * @param terms list of custom terms as a string array
          * @return the configuration attachment for the VoiceBase v2-beta API
          */
-        public static Configuration withCustomVocabulary(List<String> terms) {
-            final VocabularyEntity vocabularyEntity = new VocabularyEntity(terms);
-            final TranscriptsSection transcriptsSection = new TranscriptsSection(Lists.newArrayList(vocabularyEntity));
-            final ConfigurationEntity configurationEntity = new ConfigurationEntity(transcriptsSection);
-            final Configuration configuration = new Configuration(configurationEntity);
+        public Configuration withCustomVocabulary(List<String> terms) {
 
-            return configuration;
+            if (configurationEntity.transcriptsSection == null) {
+                configurationEntity.transcriptsSection = new TranscriptsSection();
+            }
+
+            final TranscriptsSection transcriptSection = configurationEntity.transcriptsSection;
+
+            if (transcriptSection.vocabularyEntities == null) {
+                transcriptSection.vocabularyEntities = new ArrayList<>();
+            }
+
+            final List<VocabularyEntity> vocabularyEntities = transcriptSection.vocabularyEntities;
+
+            final VocabularyEntity vocabularyEntity = new VocabularyEntity(terms);
+
+            vocabularyEntities.add(vocabularyEntity);
+
+            return this;
         }
 
+        /**
+         * Convenience : builds a configuration including specified custom terms:
+         * {
+         *   "configuration": {
+         *     "publish": {
+         *       "callbacks": [
+         *         {
+         *           "url": url,
+         *           "method": method,
+         *           "include: [ includes ]
+         *         }
+         *       ]
+         *     }
+         *   }
+         * }
+         * @param terms list of custom terms as a string array
+         * @return the configuration attachment for the VoiceBase v2-beta API
+         */
+        public Configuration withCallback(String url, String method, List<String> includes) {
+
+            if (configurationEntity.publishSection == null) {
+                configurationEntity.publishSection = new PublishSection();
+            }
+
+            final PublishSection publishSection = configurationEntity.publishSection;
+
+            if (publishSection.callbackEntities == null) {
+                publishSection.callbackEntities= new ArrayList<>();
+            }
+
+            final List<CallbackEntity> callbackEntities = publishSection.callbackEntities;
+
+            final CallbackEntity callbackEntity = new CallbackEntity(url, method, includes);
+
+            callbackEntities.add(callbackEntity);
+
+            return this;
+        }
 
 
         public Configuration(ConfigurationEntity configurationEntity) {
@@ -199,23 +263,41 @@ public class VoiceBaseV2BetaUnirestClient {
         @JsonAutoDetect
         @JsonInclude(Include.NON_NULL)
         public static class ConfigurationEntity {
+
+            public ConfigurationEntity() { }
+
             public ConfigurationEntity(TranscriptsSection transcriptsSection) {
                 this.transcriptsSection = transcriptsSection;
             }
 
+            public ConfigurationEntity(PublishSection publishSection) {
+                this.publishSection = publishSection;
+            }
+
+            public ConfigurationEntity(TranscriptsSection transcriptsSection, PublishSection publishSection) {
+                this.transcriptsSection = transcriptsSection;
+                this.publishSection = publishSection;
+            }
+
             @JsonProperty("transcripts")
-            protected TranscriptsSection transcriptsSection;
+            public TranscriptsSection transcriptsSection;
+
+            @JsonProperty("publish")
+            public PublishSection publishSection;
         }
 
         @JsonInclude(Include.NON_NULL)
         @JsonAutoDetect
         public static class TranscriptsSection {
+
+            public TranscriptsSection() { }
+
             public TranscriptsSection(List<VocabularyEntity> vocabularyEntities) {
                 this.vocabularyEntities = vocabularyEntities;
             }
 
             @JsonProperty("vocabularies")
-            protected List<VocabularyEntity> vocabularyEntities;
+            public List<VocabularyEntity> vocabularyEntities;
         }
 
         @JsonAutoDetect
@@ -226,8 +308,45 @@ public class VoiceBaseV2BetaUnirestClient {
             }
 
             @JsonProperty("terms")
-            protected List<String> terms;
+            public List<String> terms;
         }
+
+        @JsonInclude(Include.NON_NULL)
+        @JsonAutoDetect
+        public static class PublishSection {
+
+            public PublishSection() { }
+
+            public PublishSection(List<CallbackEntity> callbackEntities) {
+                this.callbackEntities = callbackEntities;
+            }
+
+            @JsonProperty("callbacks")
+            public List<CallbackEntity> callbackEntities;
+        }
+
+        @JsonInclude(Include.NON_NULL)
+        @JsonAutoDetect
+        public static class CallbackEntity {
+
+            public CallbackEntity() { }
+
+            public CallbackEntity(String url, String method, List<String> includes) {
+                this.url = url;
+                this.method = method;
+                this.includes = includes;
+            }
+
+            @JsonProperty("url")
+            public String url;
+
+            @JsonProperty("method")
+            public String method;
+
+            @JsonProperty("include")
+            public List<String> includes;
+        }
+
     }
 
     @JsonAutoDetect
@@ -236,6 +355,44 @@ public class VoiceBaseV2BetaUnirestClient {
         public String status;
         public String mediaId;
     }
+
+    @JsonAutoDetect
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class CallbackResponseEntity {
+        @JsonProperty("callback")
+        public CallbackStatusEntity callbackStatus;
+
+        @JsonProperty("media")
+        public CallbackMediaEntity callbackMedia;
+    }
+
+    @JsonAutoDetect
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class CallbackStatusEntity {
+        @JsonProperty("success")
+        public Boolean success;
+    }
+
+    @JsonAutoDetect
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class CallbackMediaEntity {
+        @JsonProperty("transcripts")
+        public CallbackTranscriptsEntity callbackTranscripts;
+
+        @JsonProperty("mediaId")
+        public String mediaId;
+
+        @JsonProperty("status")
+        public String status;
+    }
+
+    @JsonAutoDetect
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class CallbackTranscriptsEntity {
+        @JsonProperty("text")
+        public String text;
+    }
+
 
     // From: http://stackoverflow.com/questions/34049328/handle-temporary-file-in-try-with-resources
     public static class AutoDeletingTempFile implements AutoCloseable {

@@ -13,8 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -62,7 +61,7 @@ public class MessageController {
     public void recording(HttpServletRequest request, HttpServletResponse response) throws Exception {
         final String recordingUrl = getRecordingUrl(request);
         final Long recordingDuration = getRecordingDuration(request);
-        final String returnPathUrl = new AppSetup().getReturnPathURL();
+        final String returnPathUrl = new AppSetup().getReturnPathURL() + "/message/callback";
         final Participant participant = ensureParticipantFromRequest(request);
         final Vocabulary vocabulary = vocabularyService.findOneLatestByParticipant(participant);
 
@@ -88,6 +87,27 @@ public class MessageController {
         response.getWriter().print("");
         response.setContentType("application/xml");
     }
+
+    @RequestMapping(value = "/message/callback", method = RequestMethod.POST, consumes = "application/json")
+    public void callback(@RequestParam("pid") String participantId,
+                         @RequestParam(value = "vid", required = false) String vocabularyId,
+                         @RequestBody String jsonString) throws Exception {
+
+        final Participant participant = participantService.find(Long.parseLong(participantId));
+        final Vocabulary vocabulary = (vocabularyId != null)
+                ? vocabularyService.find(Long.parseLong(vocabularyId))
+                : null;
+        logger.info("Got callback participantId={}, vocabularyId={}, body={}", participantId, vocabularyId, jsonString);
+
+        VoiceBaseService.CallbackResult callbackResult = voiceBaseService.getTranscriptFromCallback(jsonString);
+
+        final String mediaId = callbackResult.mediaId;
+
+        logger.info("Got callback participantId={}, vocabularyId={}, mediaId={}, text={}",
+                participantId, vocabularyId, mediaId, callbackResult.text);
+
+    }
+
 
     protected String getLeaveAMessageResponse(HttpServletRequest request, Participant participant) throws Exception {
         final String message = "Please leave a message at the tone and tell us what your learned today. Be creative and use the unique terms you provided";
