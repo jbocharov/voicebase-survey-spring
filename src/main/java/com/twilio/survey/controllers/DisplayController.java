@@ -2,10 +2,12 @@ package com.twilio.survey.controllers;
 
 import com.twilio.survey.models.Question;
 import com.twilio.survey.models.Survey;
+import com.twilio.survey.models.Transcript;
 import com.twilio.survey.repositories.ResponseRepository;
 import com.twilio.survey.repositories.SurveyRepository;
 import com.twilio.survey.services.ResponseService;
 import com.twilio.survey.services.SurveyService;
+import com.twilio.survey.services.TranscriptService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,6 +26,9 @@ public class DisplayController {
     @Autowired
     private ResponseRepository responseRepository;
     private ResponseService responseService;
+
+    @Autowired
+    private TranscriptService transcriptService;
 
     public DisplayController() {
     }
@@ -50,5 +55,27 @@ public class DisplayController {
         model.put("questions", questions);
 
         return "index";
+    }
+
+    /**
+     * Renders the moderation view results
+     *
+     * @param model    Empty model where you fill in the data that the template will use
+     * @param request  Standard HttpServletRequest request
+     * @param response Standard HttpServletResponse response
+     * @return returns the template's name
+     */
+    @RequestMapping(value = "/moderation", method = RequestMethod.GET)
+    public String moderation(Map<String, Object> model, HttpServletRequest request,
+                        HttpServletResponse response) {
+
+
+        model.put("callInPhoneNumber", "+1 (415) 212-6002");
+
+        final List<Transcript> transcripts = transcriptService.findAll();
+
+        model.put("transcripts", transcripts);
+
+        return "moderation";
     }
 }

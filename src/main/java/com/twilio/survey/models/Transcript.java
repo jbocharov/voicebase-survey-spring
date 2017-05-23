@@ -43,6 +43,15 @@ public class Transcript {
     @Column(name = "novocab_text")
     private String novocabText;
 
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
+    @Column(name = "terms_list")
+    private String termsList;
+
+    @Column(name = "rating")
+    private Integer rating;
+
     public Transcript() {
     }
 
@@ -105,5 +114,29 @@ public class Transcript {
 
     public void setNovocabText(String novocabText) {
         this.novocabText = novocabText;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getTermsList() {
+        return termsList;
+    }
+
+    public void setTermsList(String termsList) {
+        this.termsList = termsList;
+    }
+
+    public Integer getRating() {
+        return rating;
+    }
+
+    public void setRating(Integer rating) {
+        this.rating = rating;
     }
 }
