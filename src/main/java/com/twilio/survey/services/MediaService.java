@@ -48,4 +48,32 @@ public class MediaService {
     public List<Media> findByParticipant(Participant participant) {
         return mediaRepository.findByParticipant(participant);
     }
+
+    public Media findOneLatestByVoiceBaseMediaId(String voicebaseMediaId) {
+        final List<Media> mediaList = mediaRepository.findByVoicebaseMediaId(voicebaseMediaId);
+
+        return getLatest(mediaList);
+    }
+
+    public Media findOneLatestByNovocabMediaId(String novocabMediaId) {
+        final List<Media> mediaList = mediaRepository.findByNovocabMediaId(novocabMediaId);
+
+        return getLatest(mediaList);
+    }
+
+    protected static Media getLatest(List<Media> mediaList) {
+        if (mediaList.isEmpty()) {
+            return null;
+        }
+
+        Media latestMedia = mediaList.get(0);
+
+        for (Media media : mediaList) {
+            if (media != null && media.getDate().after(latestMedia.getDate())) {
+                latestMedia = media;
+            }
+        }
+
+        return latestMedia;
+    }
 }

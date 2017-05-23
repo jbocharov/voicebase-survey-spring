@@ -2,6 +2,7 @@ package com.twilio.survey.controllers;
 
 import com.twilio.survey.models.Media;
 import com.twilio.survey.models.Participant;
+import com.twilio.survey.models.Transcript;
 import com.twilio.survey.models.Vocabulary;
 import com.twilio.survey.services.*;
 import com.twilio.survey.util.AppSetup;
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -61,17 +63,21 @@ public class MessageController {
     public void recording(HttpServletRequest request, HttpServletResponse response) throws Exception {
         final String recordingUrl = getRecordingUrl(request);
         final Long recordingDuration = getRecordingDuration(request);
-        final String returnPathUrl = new AppSetup().getReturnPathURL() + "/message/callback";
+
+        final String returnPathUrl = new AppSetup().getReturnPathURL();
+        final String vocabReturnPathUrl = returnPathUrl + "/message/callback-vocab";
+        final String novocabReturnPathUrl = returnPathUrl + "/message/callback-novocab";
+
         final Participant participant = ensureParticipantFromRequest(request);
         final Vocabulary vocabulary = vocabularyService.findOneLatestByParticipant(participant);
 
         logger.info("Got a recording link url={}, duration={}, returnPathUrl={}, vocabulary={}",
                 recordingUrl, recordingDuration, returnPathUrl, vocabulary);
 
-        final String voicebaseMediaId = voiceBaseService.upload(recordingUrl, returnPathUrl, participant, vocabulary);
+        final String voicebaseMediaId = voiceBaseService.upload(recordingUrl, vocabReturnPathUrl, participant, vocabulary);
         logger.info("Started vocab transcription voicebaseMediaId={}, url={}, duration={}, returnPathUrl={}, vocabulary={}",
                 voicebaseMediaId, recordingUrl, recordingDuration, returnPathUrl, vocabulary);
-        final String novocabMediaId = voiceBaseService.upload(recordingUrl, returnPathUrl, participant);
+        final String novocabMediaId = voiceBaseService.upload(recordingUrl, novocabReturnPathUrl, participant);
 
         logger.info("Started no-vocab transcription novocabMediaId={}, url={}, duration={}, returnPathUrl={}, vocabulary={}",
                 novocabMediaId, recordingUrl, recordingDuration, returnPathUrl, vocabulary);
@@ -80,32 +86,87 @@ public class MessageController {
                 new Media(recordingUrl, voicebaseMediaId, novocabMediaId, participant, vocabulary, new Date())
         );
 
+        final Transcript transcript = transcriptService.save(
+                new Transcript(media, vocabulary, new Date())
+        );
+
         logger.info(
-                "Created media databaseMediaId={}, voicebaseMediaId={}, novocabMediaId={}, url={}, duration={}, returnPathUrl={}, vocabulary={}",
-                media.getId().toString(), voicebaseMediaId, novocabMediaId, recordingUrl, recordingDuration, returnPathUrl, vocabulary
+                "Created media databaseMediaId={}, transcriptId={}, voicebaseMediaId={}, novocabMediaId={}, url={}, duration={}, returnPathUrl={}, vocabulary={}",
+                media.getId().toString(), transcript.getId().toString(), voicebaseMediaId, novocabMediaId, recordingUrl, recordingDuration, returnPathUrl, vocabulary
         );
         response.getWriter().print("");
         response.setContentType("application/xml");
     }
 
-    @RequestMapping(value = "/message/callback", method = RequestMethod.POST, consumes = "application/json")
-    public void callback(@RequestParam("pid") String participantId,
-                         @RequestParam(value = "vid", required = false) String vocabularyId,
+    @RequestMapping(value = "/message/callback-vocab", method = RequestMethod.POST, consumes = "application/json")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public void callbackVocab(@RequestParam("pid") String participantId,
+                         @RequestParam("vid") String vocabularyId,
                          @RequestBody String jsonString) throws Exception {
 
         final Participant participant = participantService.find(Long.parseLong(participantId));
-        final Vocabulary vocabulary = (vocabularyId != null)
-                ? vocabularyService.find(Long.parseLong(vocabularyId))
-                : null;
-        logger.info("Got callback participantId={}, vocabularyId={}, body={}", participantId, vocabularyId, jsonString);
+        final Vocabulary vocabulary = vocabularyService.find(Long.parseLong(vocabularyId));
+
+        logger.info("Got callback (vocab) participantId={}, vocabularyId={}, body={}", participantId, vocabularyId, jsonString);
 
         VoiceBaseService.CallbackResult callbackResult = voiceBaseService.getTranscriptFromCallback(jsonString);
 
         final String mediaId = callbackResult.mediaId;
 
-        logger.info("Got callback participantId={}, vocabularyId={}, mediaId={}, text={}",
+        logger.info("Got callback (vocab) participantId={}, vocabularyId={}, mediaId={}, text={}",
                 participantId, vocabularyId, mediaId, callbackResult.text);
 
+        final Media media = mediaService.findOneLatestByVoiceBaseMediaId(mediaId);
+
+        logger.info("Got media record (vocab) databaseMediaId={}, participantId={}, vocabularyId={}, mediaId={}, text={}",
+            media.getId(), participantId, vocabularyId, mediaId, callbackResult.text);
+
+        final Transcript transcript = transcriptService.findOneLatestByMedia(media);
+
+        logger.info("Got transcript record (vocab) transcriptId={}, databaseMediaId={}, participantId={}, vocabularyId={}, mediaId={}, text={}",
+                transcript.getId(), media.getId(), participantId, vocabularyId, mediaId, callbackResult.text);
+
+        transcript.setTranscriptText(callbackResult.text);
+        transcriptService.save(transcript);
+
+        logger.info("Updated transcript record (vocab) transcriptId={}, databaseMediaId={}, participantId={}, vocabularyId={}, mediaId={}, text={}",
+                transcript.getId(), media.getId(), participantId, vocabularyId, mediaId, callbackResult.text);
+    }
+
+    @RequestMapping(value = "/message/callback-novocab", method = RequestMethod.POST, consumes = "application/json")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public void callbackNovocab(@RequestParam("pid") String participantId,
+                         @RequestBody String jsonString) throws Exception {
+
+        final Participant participant = participantService.find(Long.parseLong(participantId));
+
+
+        logger.info("Got callback (novocab) participantId={}, vocabularyId={}, body={}", participantId, jsonString);
+
+        VoiceBaseService.CallbackResult callbackResult = voiceBaseService.getTranscriptFromCallback(jsonString);
+
+        final String mediaId = callbackResult.mediaId;
+
+        logger.info("Got callback (novocab) participantId={}, mediaId={}, text={}",
+                participantId,  mediaId, callbackResult.text);
+
+        final Media media = mediaService.findOneLatestByNovocabMediaId(mediaId);
+
+        logger.info("Got media record (novocab) databaseMediaId={}, participantId={},  mediaId={}, text={}",
+                media.getId(), participantId, mediaId, callbackResult.text);
+
+        final Transcript transcript = transcriptService.findOneLatestByMedia(media);
+
+        logger.info("Got transcript record (novocab) transcriptId={}, databaseMediaId={}, participantId={}, mediaId={}, text={}",
+                transcript.getId(), media.getId(), participantId, mediaId, callbackResult.text);
+
+        transcript.setNovocabText(callbackResult.text);
+        transcriptService.save(transcript);
+
+        logger.info("Updated transcript record (novocab) transcriptId={}, databaseMediaId={}, participantId={}, mediaId={}, text={}",
+                transcript.getId(), media.getId(), participantId, mediaId, callbackResult.text);
     }
 
 

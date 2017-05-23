@@ -46,6 +46,14 @@ public class Transcript {
     public Transcript() {
     }
 
+    public Transcript(Media media, Vocabulary vocabulary, Date date) {
+        this.media = media;
+        this.vocabulary = vocabulary;
+        this.date = date;
+        this.transcriptText = "";
+        this.novocabText = "";
+    }
+
     public Transcript(String transcriptText, Date date) {
         this.date = date;
         this.transcriptText = transcriptText;

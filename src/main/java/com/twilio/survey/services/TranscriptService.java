@@ -48,4 +48,26 @@ public class TranscriptService {
     public List<Transcript> findByMedia(Media media) {
         return transcriptRepository.findByMedia(media);
     }
+
+    public Transcript findOneLatestByMedia(Media media) {
+        final List<Transcript> transcripts = findByMedia(media);
+
+        return getLatest(transcripts);
+    }
+
+    protected static Transcript getLatest(List<Transcript> transcripts) {
+        if (transcripts.isEmpty()) {
+            return null;
+        }
+
+        Transcript latestTranscript = transcripts.get(0);
+
+        for (Transcript transcript : transcripts) {
+            if (transcript != null && transcript.getDate().after(latestTranscript.getDate())) {
+                latestTranscript = transcript;
+            }
+        }
+
+        return latestTranscript;
+    }
 }

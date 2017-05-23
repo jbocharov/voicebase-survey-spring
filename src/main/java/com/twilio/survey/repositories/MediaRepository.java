@@ -13,4 +13,8 @@ import java.util.List;
 @Repository
 public interface MediaRepository extends JpaRepository<Media, Long> {
     List<Media> findByParticipant(Participant participant);
+
+    List<Media> findByVoicebaseMediaId(String voicebaseMediaId);
+
+    List<Media> findByNovocabMediaId(String novocabMediaId);
 }
