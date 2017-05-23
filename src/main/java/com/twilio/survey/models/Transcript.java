@@ -55,12 +55,15 @@ public class Transcript {
     public Transcript() {
     }
 
-    public Transcript(Media media, Vocabulary vocabulary, Date date) {
+    public Transcript(Media media, Vocabulary vocabulary, Integer rating, String termsList, String phoneNumber, Date date) {
         this.media = media;
         this.vocabulary = vocabulary;
         this.date = date;
         this.transcriptText = "";
         this.novocabText = "";
+        this.rating = rating;
+        this.termsList = termsList;
+        this.phoneNumber = phoneNumber;
     }
 
     public Transcript(String transcriptText, Date date) {

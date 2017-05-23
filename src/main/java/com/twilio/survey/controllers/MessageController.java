@@ -1,9 +1,7 @@
 package com.twilio.survey.controllers;
 
-import com.twilio.survey.models.Media;
-import com.twilio.survey.models.Participant;
-import com.twilio.survey.models.Transcript;
-import com.twilio.survey.models.Vocabulary;
+import com.google.common.base.Preconditions;
+import com.twilio.survey.models.*;
 import com.twilio.survey.services.*;
 import com.twilio.survey.util.AppSetup;
 import com.twilio.survey.util.ParticipantParser;
@@ -19,7 +17,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by jbocharov on 5/18/17.
@@ -86,8 +86,11 @@ public class MessageController {
                 new Media(recordingUrl, voicebaseMediaId, novocabMediaId, participant, vocabulary, new Date())
         );
 
+        final String termsList = generateStringTermsList(vocabulary);
+        final String phoneNumber = participant.getPhoneNumber();
+
         final Transcript transcript = transcriptService.save(
-                new Transcript(media, vocabulary, new Date())
+                new Transcript(media, vocabulary, null, termsList, phoneNumber, new Date())
         );
 
         logger.info(
@@ -197,6 +200,19 @@ public class MessageController {
         return (savedParticipant != null)
                 ? savedParticipant
                 : participantService.save(ParticipantParser.parseParticipant(request));
+    }
+
+    protected String generateStringTermsList(Vocabulary vocabulary) {
+        Preconditions.checkNotNull(vocabulary);
+        final List<Term> terms = vocabulary.getTerms();
+
+        final List<String> termStrings = new ArrayList<>(terms.size());
+
+        for (Term term: terms) {
+            termStrings.add(term.getTerm().replaceAll(",", ""));
+        }
+
+        return String.join(", ", termStrings);
     }
 
     protected final static String RECORDING_URL = "RecordingUrl";
