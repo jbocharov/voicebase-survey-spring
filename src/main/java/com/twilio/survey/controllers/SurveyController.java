@@ -111,7 +111,9 @@ public class SurveyController {
                                             HttpServletRequest request,
                                             Participant participant,
                                             Vocabulary vocabulary) throws Exception {
-        String welcomeMessage = "Welcome to the " + survey.getTitle() + " survey";
+        //String welcomeMessage = "Welcome to the " + survey.getTitle() + " survey";
+        String welcomeMessage = "Welcome to the VoiceBase custom vocabulary demo. " +
+          "Today, we are going to train a custom speech engine just for you, based on your answers to 4 simple questions.";
         String questionURL = "/question?survey="
                 + survey.getId()
                 + "&question=1&pid="

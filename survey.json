@@ -1,19 +1,19 @@
 {
   "questions": [
     {
-      "body": "What is your full name?",
+      "body": "(1) What is your first and last name? Reply to this message with your answer.",
       "type": "text"
     },
     {
-      "body": "We're going to play \"Today I Learned\". What's the first subject of your fact?",
+      "body": "(2) Thank you! Next, send us a term or short phrase you would not expect a speech engine to recognize. It could a person, product, company, or your favorite movie character.",
       "type": "text"
     },
     {
-      "body": "What's the second subject of your fact?",
+      "body": "(3) Great. Reply with a second term or phrase. Our API lets you add up to 1,000 custom terms, but today we will use three.",
       "type": "text"
     },
     {
-      "body": "What's the third subject of your fact?",
+      "body": "(4) Almost there! Send us one last term or phrase. Make it a good one! ",
       "type": "text"
     }
   ],

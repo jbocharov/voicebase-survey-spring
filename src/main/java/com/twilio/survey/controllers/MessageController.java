@@ -174,7 +174,7 @@ public class MessageController {
 
 
     protected String getLeaveAMessageResponse(HttpServletRequest request, Participant participant) throws Exception {
-        final String message = "Please leave a message at the tone and tell us what your learned today. Be creative and use the unique terms you provided";
+        final String message = "At the tone, please introduce yourself and leave a short message. Be sure to use the unique terms you provided!";
         final String recordingUrl = "/message/recording?pid=" + participant.getId().toString();
         return TwiMLUtil.voiceResponseWithRecordingCallback(message, recordingUrl);
     }

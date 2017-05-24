@@ -9,9 +9,12 @@ import com.twilio.survey.models.Media;
 import com.twilio.survey.repositories.MediaRepository;
 import com.twilio.survey.repositories.TranscriptRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TranscriptService {
@@ -39,6 +42,18 @@ public class TranscriptService {
 
     public List<Transcript> findAll() {
         return transcriptRepository.findAll();
+    }
+
+    public List<Transcript> findAllReverseChronological() {
+        return transcriptRepository.findAll(new Sort(Sort.Direction.DESC, "date"));
+    }
+
+    public List<Transcript> findAllRatedReverseChronological() {
+        final List<Transcript> transcripts = findAllReverseChronological();
+        return transcripts.stream()
+                .filter(transcript -> (transcript.getRating() != null && transcript.getRating() > 0))
+                .sorted(Comparator.comparing(Transcript::getRating).reversed())
+                .collect(Collectors.toList());
     }
 
     public Transcript find(Long id) {

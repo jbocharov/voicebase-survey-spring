@@ -72,10 +72,32 @@ public class DisplayController {
 
         model.put("callInPhoneNumber", "+1 (415) 212-6002");
 
-        final List<Transcript> transcripts = transcriptService.findAll();
+        final List<Transcript> transcripts = transcriptService.findAllReverseChronological();
 
         model.put("transcripts", transcripts);
 
         return "moderation";
+    }
+
+    /**
+     * Renders the demo view results
+     *
+     * @param model    Empty model where you fill in the data that the template will use
+     * @param request  Standard HttpServletRequest request
+     * @param response Standard HttpServletResponse response
+     * @return returns the template's name
+     */
+    @RequestMapping(value = "/demo", method = RequestMethod.GET)
+    public String demo(Map<String, Object> model, HttpServletRequest request,
+                             HttpServletResponse response) {
+
+
+        model.put("callInPhoneNumber", "+1 (415) 212-6002");
+
+        final List<Transcript> transcripts = transcriptService.findAllRatedReverseChronological();
+
+        model.put("transcripts", transcripts);
+
+        return "demo";
     }
 }

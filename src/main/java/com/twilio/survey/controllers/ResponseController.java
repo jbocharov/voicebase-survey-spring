@@ -55,7 +55,8 @@ public class ResponseController {
         final Term term = termService.save(new Term(termString, currentVocabulary, new Date()));
 
         if (survey.isLastQuestion(currentQuestion)) {
-            String message = "Tank you for taking the " + survey.getTitle() + " survey. Good Bye";
+            String message = "Your custom speech engine is ready - give it try! Call us at 415-212-6002 and leave a message that uses your name and the custom terms you provided.";
+            //String message = "Thank  you for " + survey.getTitle() + " survey. Good Bye";
             if (request.getParameter("MessageSid") != null) {
                 responseWriter.print(TwiMLUtil.messagingResponse(message));
             } else {
