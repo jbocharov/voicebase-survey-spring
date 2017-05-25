@@ -17,9 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by jbocharov on 5/18/17.
@@ -99,6 +97,28 @@ public class MessageController {
         );
         response.getWriter().print("");
         response.setContentType("application/xml");
+    }
+
+    @RequestMapping(value = "/message/moderate", method = RequestMethod.GET, produces = "application/json")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public Map<String, Object> moderate(@RequestParam("tid") Long transcriptId,
+                         @RequestParam("rating") Integer rating) throws Exception {
+        logger.info("Moderation: rating transcriptId={}, rating={}");
+
+        final Transcript transcript = transcriptService.find(transcriptId);
+        if (transcript == null) { throw new IllegalArgumentException("tid"); }
+        transcript.setRating(rating);
+        transcriptService.save(transcript);
+
+        final Map<String, Object> response  = new HashMap<String, Object>();
+
+        response.put("tid", transcriptId);
+        response.put("rating", rating);
+        response.put("success", true);
+
+        logger.info("Moderation: rated transcriptId={}, rating={}");
+        return response;
     }
 
     @RequestMapping(value = "/message/callback-vocab", method = RequestMethod.POST, consumes = "application/json")

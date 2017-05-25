@@ -52,6 +52,7 @@ public class Transcript {
     @Column(name = "rating")
     private Integer rating;
 
+
     public Transcript() {
     }
 
@@ -141,5 +142,9 @@ public class Transcript {
 
     public void setRating(Integer rating) {
         this.rating = rating;
+    }
+
+    public boolean getHasRating() {
+        return rating != null;
     }
 }

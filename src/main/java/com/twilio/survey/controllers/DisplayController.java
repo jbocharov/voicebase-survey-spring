@@ -9,14 +9,16 @@ import com.twilio.survey.services.ResponseService;
 import com.twilio.survey.services.SurveyService;
 import com.twilio.survey.services.TranscriptService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Controller
 public class DisplayController {
@@ -99,5 +101,46 @@ public class DisplayController {
         model.put("transcripts", transcripts);
 
         return "demo";
+    }
+
+    /**
+     * Renders the demo view results
+     *
+     * @param model    Empty model where you fill in the data that the template will use
+     * @param request  Standard HttpServletRequest request
+     * @param response Standard HttpServletResponse response
+     * @return returns the template's name
+     */
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    @RequestMapping(value = "/results", method = RequestMethod.GET, produces = "application/json")
+    public Map<String, Object> results(
+            HttpServletResponse response) {
+
+        final List<Transcript> transcripts = transcriptService.findAllRatedReverseChronological();
+
+        response.addHeader("Access-Control-Allow-Origin", "*");
+        response.addHeader("Access-Control-Allow-Methods", "GET");
+
+
+        final Map<String, Object> responseEntity = new LinkedHashMap<>();
+
+        // Wrk around Hiberate strangeness with responseEntity.put("transcripts", transcripts);
+        final int transcriptCount = transcripts.size();
+        List<Map<String, Object>> normalizedTranscriptResults = new ArrayList<>(transcriptCount);
+
+        for (Transcript transcript: transcripts) {
+            Map<String, Object> abstractedTranscript = new LinkedHashMap<>();
+            abstractedTranscript.put("transcriptText", transcript.getTranscriptText());
+            abstractedTranscript.put("novocabText", transcript.getNovocabText());
+            abstractedTranscript.put("termsList", transcript.getTermsList());
+            abstractedTranscript.put("phoneNumber", transcript.getPhoneNumber());
+
+            normalizedTranscriptResults.add(abstractedTranscript);
+        }
+        responseEntity.put("transcriptCount", transcriptCount);
+        responseEntity.put("transcripts", normalizedTranscriptResults);
+
+        return responseEntity;
     }
 }

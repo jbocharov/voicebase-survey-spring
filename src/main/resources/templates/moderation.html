@@ -22,6 +22,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/parsley.js/2.1.2/parsley.min.js"></script>
 
     <title>Survey Results</title>
+    <script>
+        window.rateTranscript = function (transcriptId, rating) {
+            console.log("rating transcriptId, rating", transcriptId, rating);
+            window.jQuery.ajax("/message/moderate?tid=" + transcriptId + "&rating=" + rating)
+                .then(function (result) {
+                    console.log("Rated transcriptId, rating, result", transcriptId, rating, result);
+                });
+        }
+    </script>
 </head>
 
 <nav class="navbar navbar-default">
@@ -57,15 +66,20 @@
                             <li class="list-group-item">Transcript (w/ vocab): {{transcriptText}}</li>
                             <li class="list-group-item">Transcript (no vocab): {{novocabText}}</li>
                             <li class="list-group-item">Terms List: {{termsList}}</li>
+                            {{#hasRating}}
+                                <li class="list-group-item">Rating: {{rating}}</li>
+                            {{/hasRating}}
                             <li class="list-group-item">
-                                <a href="#">5</a>
-                                <a href="#">4</a>
-                                <a href="#">3</a>
-                                <a href="#">2</a>
-                                <a href="#">1</a>
-                                <a href="#">0 (Reject)</a>
+                                Rate:
+                                <a href="#" onclick="window.rateTranscript({{id}}, 5)">5</a>
+                                <a href="#" onclick="window.rateTranscript({{id}}, 4)">4</a>
+                                <a href="#" onclick="window.rateTranscript({{id}}, 3)">3</a>
+                                <a href="#" onclick="window.rateTranscript({{id}}, 2)">2</a>
+                                <a href="#" onclick="window.rateTranscript({{id}}, 1)">1</a>
+                                <a href="#" onclick="window.rateTranscript({{id}}, 0)">Reject</a>
                             </li>
                             <li class="list-group-item">Date: {{date}}</li>
+                            <li class="list-group-item">ID: {{id}}</li>
                         </ol>
                     </div>
 
