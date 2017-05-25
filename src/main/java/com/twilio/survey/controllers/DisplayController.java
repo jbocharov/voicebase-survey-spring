@@ -78,7 +78,33 @@ public class DisplayController {
 
         final List<Transcript> transcripts = transcriptService.findAllReverseChronological();
 
-        model.put("transcripts", transcripts);
+        // Keeping dirty entities without saving makes Hiberate angry...
+        // and we don't want to see Hiberate when it's angry
+        final List<Map<String, Object>> normalizedTranscriptResults = normalizeTranscriptResults(transcripts);
+
+        for (Map<String, Object> transcript: normalizedTranscriptResults) {
+            final String termsList = (String) transcript.get("termsList");
+
+            final String rawNovocabText = (String) transcript.get("novocabText");
+            final String novocabText = (String) CustomVocabularyHighlighter.highlight(
+                    rawNovocabText, termsList, "<b>", "</b>"
+            );
+            transcript.put("novocabText", novocabText);
+
+            final String rawTranscriptText = (String) transcript.get("transcriptText");
+            final String transcriptText = CustomVocabularyHighlighter.highlight(
+                    rawTranscriptText, termsList, "<b>", "</b>"
+            );
+            transcript.put("transcriptText", transcriptText);
+
+            final String highlightedTermsList = CustomVocabularyHighlighter.highlight(
+                    termsList, termsList, "<b>", "</b>"
+            );
+            transcript.put("termsList", highlightedTermsList);
+
+        }
+
+        model.put("transcripts", normalizedTranscriptResults);
 
         return "moderation";
     }
@@ -100,7 +126,7 @@ public class DisplayController {
 
         final List<Transcript> transcripts = transcriptService.findAllRatedReverseChronological();
 
-        // Keeping dirty entities without same makes Hiberate angry...
+        // Keeping dirty entities without saving makes Hiberate angry...
         // and we don't want to see Hiberate when it's angry
         final List<Map<String, Object>> normalizedTranscriptResults = normalizeTranscriptResults(transcripts);
 
@@ -159,6 +185,7 @@ public class DisplayController {
             abstractedTranscript.put("rating", transcript.getRating());
             abstractedTranscript.put("hasRating", transcript.getHasRating());
             abstractedTranscript.put("date", transcript.getDate());
+            abstractedTranscript.put("id", transcript.getId());
 
             normalizedTranscriptResults.add(abstractedTranscript);
         }

@@ -73,6 +73,10 @@ public class AppSetup {
 
   public String getPhoneNumberTwilio() { return env.get("PHONE_NUMBER_TWILIO"); }
 
+  public String getTwilioAccountSid() { return env.get("TWILIO_ACCOUNT_SID"); }
+
+  public String getTwilioAuthToken() { return env.get("TWILIO_AUTH_TOKEN"); }
+
 
   /**
    * Fetches the environment variable TWILIO_DISABLE_DB_SSL. This needs to be
