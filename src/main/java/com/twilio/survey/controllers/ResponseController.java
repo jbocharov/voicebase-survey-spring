@@ -4,6 +4,7 @@ import com.twilio.survey.models.*;
 import com.twilio.survey.repositories.QuestionRepository;
 import com.twilio.survey.repositories.ResponseRepository;
 import com.twilio.survey.services.*;
+import com.twilio.survey.util.AppSetup;
 import com.twilio.survey.util.ResponseParser;
 import com.twilio.survey.util.TwiMLUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,8 +56,10 @@ public class ResponseController {
         final Term term = termService.save(new Term(termString, 3.0f, currentVocabulary, new Date()));
 
         if (survey.isLastQuestion(currentQuestion)) {
-            String message = "Your custom speech engine is ready - give it try! Call us at 415-212-6002 and leave a message that uses your name and the custom terms you provided.";
-            //String message = "Thank  you for " + survey.getTitle() + " survey. Good Bye";
+            final String phoneNumberHuman = new AppSetup().getPhoneNumberHuman();
+            final String message = "Your custom speech engine is ready - give it try! Call us at " +
+                    phoneNumberHuman + " and leave a message that uses your name and the custom terms you provided.";
+
             if (request.getParameter("MessageSid") != null) {
                 responseWriter.print(TwiMLUtil.messagingResponse(message));
             } else {

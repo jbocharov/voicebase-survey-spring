@@ -69,6 +69,10 @@ public class AppSetup {
 
   public String getVoiceBaseToken() { return env.get("VOICEBASE_TOKEN"); }
 
+  public String getPhoneNumberHuman() { return env.get("PHONE_NUMBER_HUMAN"); }
+
+  public String getPhoneNumberTwilio() { return env.get("PHONE_NUMBER_TWILIO"); }
+
 
   /**
    * Fetches the environment variable TWILIO_DISABLE_DB_SSL. This needs to be

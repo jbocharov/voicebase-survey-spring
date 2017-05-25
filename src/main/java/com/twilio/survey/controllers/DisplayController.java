@@ -8,6 +8,7 @@ import com.twilio.survey.repositories.SurveyRepository;
 import com.twilio.survey.services.ResponseService;
 import com.twilio.survey.services.SurveyService;
 import com.twilio.survey.services.TranscriptService;
+import com.twilio.survey.util.AppSetup;
 import com.twilio.survey.util.CustomVocabularyHighlighter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -73,7 +74,7 @@ public class DisplayController {
                         HttpServletResponse response) {
 
 
-        model.put("callInPhoneNumber", "+1 (415) 212-6002");
+        model.put("callInPhoneNumber", new AppSetup().getPhoneNumberHuman());
 
         final List<Transcript> transcripts = transcriptService.findAllReverseChronological();
 
@@ -95,7 +96,7 @@ public class DisplayController {
                              HttpServletResponse response) {
 
 
-        model.put("callInPhoneNumber", "+1 (415) 212-6002");
+        model.put("callInPhoneNumber", new AppSetup().getPhoneNumberHuman());
 
         final List<Transcript> transcripts = transcriptService.findAllRatedReverseChronological();
 
