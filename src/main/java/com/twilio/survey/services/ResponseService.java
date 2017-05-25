@@ -17,8 +17,9 @@ public class ResponseService {
         this.responseRepository = responseRepository;
     }
 
-    public void save(Response response) {
+    public Response save(Response response) {
         responseRepository.save(response);
+        return response;
     }
 
     public void delete(Long id) {

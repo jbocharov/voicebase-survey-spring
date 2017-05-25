@@ -1,14 +1,14 @@
 package com.twilio.survey.controllers;
 
 import com.twilio.survey.SurveyJavaApplication;
+import com.twilio.survey.models.Participant;
 import com.twilio.survey.models.Question;
 import com.twilio.survey.models.Survey;
+import com.twilio.survey.models.Vocabulary;
 import com.twilio.survey.repositories.QuestionRepository;
 import com.twilio.survey.repositories.ResponseRepository;
 import com.twilio.survey.repositories.SurveyRepository;
-import com.twilio.survey.services.QuestionService;
-import com.twilio.survey.services.ResponseService;
-import com.twilio.survey.services.SurveyService;
+import com.twilio.survey.services.*;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,6 +19,7 @@ import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,6 +42,11 @@ public class ResponseControllerTest extends BaseControllerTest {
     private SurveyService surveyService;
     private ResponseService responseService;
 
+    @Autowired
+    private ParticipantService participantService;
+    @Autowired
+    private VocabularyService vocabularyService;
+
     @Before
     public void before() {
         questionService = new QuestionService(questionRepository);
@@ -49,13 +55,19 @@ public class ResponseControllerTest extends BaseControllerTest {
         responseService.deleteAll();
         questionService.deleteAll();
         surveyService.deleteAll();
+        participantService.deleteAll();
+        vocabularyService.deleteAll();
     }
 
     @Test
     public void thankYouAndHangupCallOnLastAnswerTest() throws Exception {
         Question question = createQuestion();
+        final Participant participant = createParticipant();
+        final Vocabulary vocabulary = createVocabulary();
 
-        String requestPath = "/save_response?qid=" + question.getId();
+        String requestPath = "/save_response?qid=" + question.getId()
+                + "&pid=" + participant.getId().toString()
+                + "&vid=" + vocabulary.getId().toString();
 
         Map<String, Object> params = new HashMap<>();
         params.put("RecordingUrl", "http://recording_url.com");
@@ -68,8 +80,12 @@ public class ResponseControllerTest extends BaseControllerTest {
     @Test
     public void thankYouSMSOnLastAnswerTest() throws Exception {
         Question question = createQuestion();
+        final Participant participant = createParticipant();
+        final Vocabulary vocabulary = createVocabulary();
 
-        String requestPath = "/save_response?qid=" + question.getId();
+        String requestPath = "/save_response?qid=" + question.getId()
+                + "&pid=" + participant.getId().toString()
+                + "&vid=" + vocabulary.getId().toString();
 
         Map<String, Object> params = new HashMap<>();
         params.put("Body", "Last answer");
@@ -81,8 +97,12 @@ public class ResponseControllerTest extends BaseControllerTest {
     @Test
     public void saveTextWhenTranscriptionSucceedTest() throws Exception {
         Question question = createQuestion();
+        final Participant participant = createParticipant();
+        final Vocabulary vocabulary = createVocabulary();
 
-        String requestPath = "/save_response?qid=" + question.getId();
+        String requestPath = "/save_response?qid=" + question.getId()
+                + "&pid=" + participant.getId().toString()
+                + "&vid=" + vocabulary.getId().toString();
 
         Map<String, Object> params = new HashMap<>();
         params.put("RecordingUrl", "http://recording_url.com");
@@ -99,8 +119,12 @@ public class ResponseControllerTest extends BaseControllerTest {
     @Test
     public void saveRecordWhenTranscriptionFailsTest() throws Exception {
         Question question = createQuestion();
+        final Participant participant = createParticipant();
+        final Vocabulary vocabulary = createVocabulary();
 
-        String requestPath = "/save_response?qid=" + question.getId();
+        String requestPath = "/save_response?qid=" + question.getId()
+                + "&pid=" + participant.getId().toString()
+                + "&vid=" + vocabulary.getId().toString();
 
         Map<String, Object> params = new HashMap<>();
         params.put("RecordingUrl", "http://recording_url.com");
@@ -117,5 +141,18 @@ public class ResponseControllerTest extends BaseControllerTest {
     private Question createQuestion() {
         Survey survey = surveyService.create(new Survey("New Title Survey", new Date()));
         return questionService.save(new Question("Question Body", "text", survey, new Date()));
+    }
+
+    private Participant createParticipant() {
+        final String phoneNumber = "+1415*****12";
+        final String unmaskedPhoneNumber = "+14155551212";
+        final Participant participant = participantService.save(new Participant(
+                phoneNumber, unmaskedPhoneNumber, new Date()
+        ));
+        return participant;
+    }
+
+    private Vocabulary createVocabulary() {
+        return vocabularyService.save(new Vocabulary(new ArrayList<>(), new Date()));
     }
 }

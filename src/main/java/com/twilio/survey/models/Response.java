@@ -21,6 +21,10 @@ public class Response {
     @JoinColumn(name = "question_id")
     private Question question;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "participant_id")
+    private Participant participant;
+
     @Column(name = "date")
     private Date date;
 
@@ -39,10 +43,11 @@ public class Response {
     public Response() {
     }
 
-    public Response(String response, String sessionSid, Question question, Date date) {
+    public Response(String response, String sessionSid, Question question, Participant participant, Date date) {
         this.response = response;
         this.sessionSid = sessionSid;
         this.question = question;
+        this.participant = participant;
         this.date = date;
         this.isText = false;
         this.isNumeric = false;
@@ -122,5 +127,13 @@ public class Response {
 
     public boolean isRecording() {
         return this.getResponse().contains("/Recordings/") && this.getResponse().startsWith("https");
+    }
+
+    public Participant getParticipant() {
+        return participant;
+    }
+
+    public void setParticipant(Participant participant) {
+        this.participant = participant;
     }
 }

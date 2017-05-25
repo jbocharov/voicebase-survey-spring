@@ -2,6 +2,7 @@ package com.twilio.survey.util;
 
 import com.twilio.survey.models.Question;
 import com.twilio.survey.models.Survey;
+import com.twilio.survey.models.Vocabulary;
 import com.twilio.twiml.Body;
 import com.twilio.twiml.Gather;
 import com.twilio.twiml.Hangup;
@@ -17,8 +18,10 @@ import com.twilio.twiml.VoiceResponse;
 
 public class TwiMLUtil {
 
-    public static String redirect(int nextQuestionNumber, Survey survey) throws TwiMLException {
-        String nextQuestionURL = "/question?survey=" + survey.getId() + "&question=" + nextQuestionNumber;
+    public static String redirect(int nextQuestionNumber, Survey survey, Vocabulary vocabulary) throws TwiMLException {
+        String nextQuestionURL = "/question?survey=" + survey.getId()
+                + "&question=" + nextQuestionNumber
+                + "&vid=" + vocabulary.getId().toString();
         return redirect(nextQuestionURL, Method.GET).toXml();
     }
 
@@ -77,6 +80,21 @@ public class TwiMLUtil {
         return new MessagingResponse.Builder()
                 .message(new Message.Builder().body(new Body(message)).build())
                 .redirect(new Redirect.Builder().url(redirectUrl).method(Method.GET).build())
+                .build()
+                .toXml();
+    }
+
+    public static String voiceResponseWithRecordingCallback(String message, String recordingUrl) throws TwiMLException {
+        return new VoiceResponse.Builder()
+                .say(new Say.Builder(message).build())
+                .record(new Record.Builder()
+                        .action(recordingUrl)
+                        .method(Method.POST)
+                        .finishOnKey("#")
+                        .maxLength(60)
+                        .build()
+                )
+                .hangup(new Hangup())
                 .build()
                 .toXml();
     }

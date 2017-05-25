@@ -1,25 +1,21 @@
 {
   "questions": [
     {
-      "body": "What is your full name?",
+      "body": "(1) What is your first and last name? Reply to this message with your answer.",
       "type": "text"
     },
     {
-      "body": "In a scale of 1 to 9, how would you rate the quality of this call?",
-      "type": "numeric"
-    },
-    {
-      "body": "Are you more than 21 years old?",
-      "type": "yes-no"
-    },
-    {
-      "body": "What is the model of the phone you own, if you own one?",
+      "body": "(2) Thank you! Next, send us a term or short phrase you would not expect a speech engine to recognize. It could a person, product, company, or your favorite movie character.",
       "type": "text"
     },
     {
-      "body": "Name a Java based framework you know about?",
+      "body": "(3) Great. Reply with a second term or phrase. Our API lets you add up to 1,000 custom terms, but today we will use three.",
+      "type": "text"
+    },
+    {
+      "body": "(4) Almost there! Send us one last term or phrase. Make it a good one! ",
       "type": "text"
     }
   ],
-  "title": "Spring"
+  "title": "VoiceBase + Twilio Signal 2017"
 }

@@ -1,9 +1,18 @@
 package com.twilio.survey.controllers;
 
+import com.twilio.survey.models.Participant;
 import com.twilio.survey.models.Survey;
+import com.twilio.survey.models.Term;
+import com.twilio.survey.models.Vocabulary;
 import com.twilio.survey.repositories.SurveyRepository;
+import com.twilio.survey.services.ParticipantService;
 import com.twilio.survey.services.SurveyService;
+import com.twilio.survey.services.VocabularyService;
+import com.twilio.survey.util.ParticipantParser;
 import com.twilio.survey.util.TwiMLUtil;
+import com.twilio.twiml.TwiML;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +21,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 @Controller
 public class SurveyController {
@@ -19,8 +31,16 @@ public class SurveyController {
     private SurveyRepository surveyRepository;
     private SurveyService surveyService;
 
+    @Autowired
+    private ParticipantService participantService;
+
+    @Autowired
+    private VocabularyService vocabularyService;
+
     public SurveyController() {
     }
+
+
 
     /**
      * Calls endpoint; Welcomes a user and redirects to the question controller if there is a survey to be answered.
@@ -33,7 +53,9 @@ public class SurveyController {
         Survey lastSurvey = surveyService.findLast();
 
         if (lastSurvey != null) {
-            response.getWriter().print(getFirstQuestionRedirect(lastSurvey, request));
+            Participant participant = ensureParticipantFromRequest(request);
+            final Vocabulary vocabulary = vocabularyService.save(new Vocabulary(participant, new Date()));
+            response.getWriter().print(getFirstQuestionRedirect(lastSurvey, request, participant, vocabulary));
         } else {
             response.getWriter().print(getHangupResponse(request));
         }
@@ -52,12 +74,14 @@ public class SurveyController {
         HttpSession session = request.getSession(false);
 
         if (lastSurvey != null) {
+            final Participant participant = ensureParticipantFromRequest(request);
             if (session == null || session.isNew()) {
                 // New session,
-                response.getWriter().print(getFirstQuestionRedirect(lastSurvey, request));
+                final Vocabulary vocabulary = vocabularyService.save(new Vocabulary(participant, new Date()));
+                response.getWriter().print(getFirstQuestionRedirect(lastSurvey, request, participant, vocabulary));
             } else {
                 // Ongoing session, redirect to ResponseController to save it's answer.
-                response.getWriter().print(getSaveResponseRedirect(session));
+                response.getWriter().print(getSaveResponseRedirect(session, participant));
             }
         } else {
             // No survey
@@ -66,8 +90,13 @@ public class SurveyController {
         response.setContentType("application/xml");
     }
 
-    private String getSaveResponseRedirect(HttpSession session) throws Exception {
-        String saveURL = "/save_response?qid=" + getQuestionIdFromSession(session);
+    private String getSaveResponseRedirect(HttpSession session, Participant participant) throws Exception {
+        String saveURL = "/save_response?qid="
+                + getQuestionIdFromSession(session)
+                + "&pid="
+                + participant.getId().toString()
+                + "&vid="
+                + getVocabularyIdFromSession(session);
         return TwiMLUtil.redirectPost(saveURL);
     }
 
@@ -78,9 +107,19 @@ public class SurveyController {
      * @param request HttpServletRequest request
      * @return TwiMLResponse
      */
-    private String getFirstQuestionRedirect(Survey survey, HttpServletRequest request) throws Exception {
-        String welcomeMessage = "Welcome to the " + survey.getTitle() + " survey";
-        String questionURL = "/question?survey=" + survey.getId() + "&question=1";
+    private String getFirstQuestionRedirect(Survey survey,
+                                            HttpServletRequest request,
+                                            Participant participant,
+                                            Vocabulary vocabulary) throws Exception {
+        //String welcomeMessage = "Welcome to the " + survey.getTitle() + " survey";
+        String welcomeMessage = "Welcome to the VoiceBase custom vocabulary demo. " +
+          "Today, we are going to train a custom speech engine just for you, based on your answers to 4 simple questions.";
+        String questionURL = "/question?survey="
+                + survey.getId()
+                + "&question=1&pid="
+                + participant.getId().toString()
+                + "&vid="
+                + vocabulary.getId().toString();
         if (request.getParameter("MessageSid") != null) {
             return TwiMLUtil.messagingResponseWithRedirect(welcomeMessage, questionURL);
         } else {
@@ -105,6 +144,7 @@ public class SurveyController {
         }
     }
 
+
     private void cleanSession(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session != null) {
@@ -115,4 +155,22 @@ public class SurveyController {
     private Long getQuestionIdFromSession(HttpSession session) {
         return (Long) session.getAttribute("questionId");
     }
+
+    private Long getVocabularyIdFromSession(HttpSession session) {
+        return (Long) session.getAttribute("vocabularyId");
+    }
+
+    private Participant ensureParticipantFromRequest(HttpServletRequest request) {
+        final Participant requestParticipant = ParticipantParser.parseParticipant(request);
+
+        final Participant savedParticipant = participantService.getByUnmaskedPhoneNumber(
+                requestParticipant.getUnmaskedPhoneNumber()
+        );
+
+        return (savedParticipant != null)
+                ? savedParticipant
+                : participantService.save(ParticipantParser.parseParticipant(request));
+    }
+
+    private final static Logger logger = LoggerFactory.getLogger(SurveyController.class);
 }

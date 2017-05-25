@@ -1,9 +1,13 @@
 package com.twilio.survey.controllers;
 
+import com.twilio.survey.models.Participant;
 import com.twilio.survey.models.Question;
 import com.twilio.survey.models.Survey;
+import com.twilio.survey.models.Vocabulary;
 import com.twilio.survey.repositories.SurveyRepository;
+import com.twilio.survey.services.ParticipantService;
 import com.twilio.survey.services.SurveyService;
+import com.twilio.survey.services.VocabularyService;
 import com.twilio.survey.util.QuestionBuilder;
 import com.twilio.survey.util.SMSQuestionBuilder;
 import com.twilio.survey.util.VoiceQuestionBuilder;
@@ -22,6 +26,11 @@ public class QuestionController {
     private SurveyRepository surveyRepository;
     private SurveyService surveyService;
 
+    @Autowired
+    private ParticipantService participantService;
+    @Autowired
+    private VocabularyService vocabularyService;
+
     public QuestionController() {
     }
 
@@ -33,8 +42,11 @@ public class QuestionController {
         this.surveyService = new SurveyService(surveyRepository);
         Survey survey = surveyService.find(Long.parseLong(request.getParameter("survey")));
 
+        final Vocabulary vocabulary = vocabularyService.find(Long.parseLong(request.getParameter("vid")));
+        final Participant participant = participantService.getByUnmaskedPhoneNumber(request.getParameter("From"));
+
         Question currentQuestion = survey.getQuestionByNumber(Integer.parseInt(request.getParameter("question")));
-        QuestionBuilder builder = getQuestionHandler(currentQuestion, request);
+        QuestionBuilder builder = getQuestionHandler(currentQuestion, request, vocabulary);
 
         if (currentQuestion != null) {
             response.getWriter().print(builder.build());
@@ -44,19 +56,20 @@ public class QuestionController {
         response.setContentType("application/xml");
     }
 
-    private void createSessionForQuestion(HttpServletRequest request, Question currentQuestion) {
+    private void createSessionForQuestion(HttpServletRequest request, Question currentQuestion, Vocabulary currentVocabulary) {
         if (currentQuestion == null) {
             return;
         }
         HttpSession session = request.getSession(true);
         session.setAttribute("questionId", currentQuestion.getId());
+        session.setAttribute("vocabularyId", currentVocabulary.getId());
     }
 
-    private QuestionBuilder getQuestionHandler(Question currentQuestion, HttpServletRequest request) {
+    private QuestionBuilder getQuestionHandler(Question currentQuestion, HttpServletRequest request, Vocabulary vocabulary) {
         if (isVoiceRequest(request)) {
             return new VoiceQuestionBuilder(currentQuestion);
         } else {
-            createSessionForQuestion(request, currentQuestion);
+            createSessionForQuestion(request, currentQuestion, vocabulary);
             return new SMSQuestionBuilder(currentQuestion);
         }
     }

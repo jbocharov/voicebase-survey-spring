@@ -1,12 +1,10 @@
 package com.twilio.survey.controllers;
 
-import com.twilio.survey.models.Question;
-import com.twilio.survey.models.Response;
-import com.twilio.survey.models.Survey;
+import com.twilio.survey.models.*;
 import com.twilio.survey.repositories.QuestionRepository;
 import com.twilio.survey.repositories.ResponseRepository;
-import com.twilio.survey.services.QuestionService;
-import com.twilio.survey.services.ResponseService;
+import com.twilio.survey.services.*;
+import com.twilio.survey.util.AppSetup;
 import com.twilio.survey.util.ResponseParser;
 import com.twilio.survey.util.TwiMLUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
+import java.util.Date;
 
 @Controller
 public class ResponseController {
@@ -26,6 +25,13 @@ public class ResponseController {
     @Autowired
     private ResponseRepository responseRepository;
     private ResponseService responseService;
+
+    @Autowired
+    private ParticipantService participantService;
+    @Autowired
+    private VocabularyService vocabularyService;
+    @Autowired
+    private TermService termService;
 
     public ResponseController() {
     }
@@ -41,23 +47,31 @@ public class ResponseController {
         this.responseService = new ResponseService(responseRepository);
 
         Question currentQuestion = getQuestionFromRequest(request);
+        Participant currentParticipant = getParticipantFromRequest(request);
+        Vocabulary currentVocabulary = getVocabularyFromRequest(request);
         Survey survey = currentQuestion.getSurvey();
-        persistResponse(new ResponseParser(currentQuestion, request).parse());
+
+        final Response responseEntity = persistResponse(new ResponseParser(currentQuestion, currentParticipant, request).parse());
+        final String termString = responseEntity.getResponse();
+        final Term term = termService.save(new Term(termString, 3.0f, currentVocabulary, new Date()));
 
         if (survey.isLastQuestion(currentQuestion)) {
-            String message = "Tank you for taking the " + survey.getTitle() + " survey. Good Bye";
+            final String phoneNumberHuman = new AppSetup().getPhoneNumberHuman();
+            final String message = "Your custom speech engine is ready - give it try! Call us at " +
+                    phoneNumberHuman + " and leave a message that uses your name and the custom terms you provided.";
+
             if (request.getParameter("MessageSid") != null) {
                 responseWriter.print(TwiMLUtil.messagingResponse(message));
             } else {
                 responseWriter.print(TwiMLUtil.voiceResponse(message));
             }
         } else {
-            responseWriter.print(TwiMLUtil.redirect(survey.getNextQuestionNumber(currentQuestion), survey));
+            responseWriter.print(TwiMLUtil.redirect(survey.getNextQuestionNumber(currentQuestion), survey, currentVocabulary));
         }
         response.setContentType("application/xml");
     }
 
-    private void persistResponse(Response questionResponse) {
+    private Response persistResponse(Response questionResponse) {
         Question currentQuestion = questionResponse.getQuestion();
         Response previousResponse = responseService.getBySessionSidAndQuestion(questionResponse.getSessionSid(), currentQuestion);
         if (previousResponse != null) {
@@ -66,10 +80,18 @@ public class ResponseController {
         }
 
         /** creates the question response on the db */
-        responseService.save(questionResponse);
+        return responseService.save(questionResponse);
     }
 
     private Question getQuestionFromRequest(HttpServletRequest request) {
         return questionService.find(Long.parseLong(request.getParameter("qid")));
+    }
+
+    private Participant getParticipantFromRequest(HttpServletRequest request) {
+        return participantService.find(Long.parseLong(request.getParameter("pid")));
+    }
+
+    private Vocabulary getVocabularyFromRequest(HttpServletRequest request) {
+        return vocabularyService.find(Long.parseLong(request.getParameter("vid")));
     }
 }

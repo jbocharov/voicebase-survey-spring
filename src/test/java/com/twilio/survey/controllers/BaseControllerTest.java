@@ -37,11 +37,11 @@ public class BaseControllerTest {
     }
 
     protected String getAsSMS(String url) throws Exception {
-        return getWithParameters(url, "MessageSid", "SMS225345234234");
+        return getWithParameters(url, "MessageSid", "SMS225345234234", "From", "+14155551212");
     }
 
     protected String getAsCall(String url) throws Exception {
-        return getWithParameters(url, "CallSid", "Call25345234234");
+        return getWithParameters(url, "CallSid", "Call25345234234", "From", "+14155551212");
     }
 
     protected String get(String url) throws Exception {
@@ -52,6 +52,17 @@ public class BaseControllerTest {
         Map<String, Object> params = new HashMap<>();
         if (key != null && value != null) {
             params.put(key, value);
+        }
+        return getWithParameters(url, params);
+    }
+
+    protected String getWithParameters(String url, String key, String value, String key2, String value2) throws Exception {
+        Map<String, Object> params = new HashMap<>();
+        if (key != null && value != null) {
+            params.put(key, value);
+        }
+        if (key2 != null && value2 != null) {
+            params.put(key2, value2);
         }
         return getWithParameters(url, params);
     }

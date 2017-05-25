@@ -65,6 +65,19 @@ public class AppSetup {
     return env.get("DATABASE_URL");
   }
 
+  public String getReturnPathURL() { return env.get("RETURN_PATH_URL"); }
+
+  public String getVoiceBaseToken() { return env.get("VOICEBASE_TOKEN"); }
+
+  public String getPhoneNumberHuman() { return env.get("PHONE_NUMBER_HUMAN"); }
+
+  public String getPhoneNumberTwilio() { return env.get("PHONE_NUMBER_TWILIO"); }
+
+  public String getTwilioAccountSid() { return env.get("TWILIO_ACCOUNT_SID"); }
+
+  public String getTwilioAuthToken() { return env.get("TWILIO_AUTH_TOKEN"); }
+
+
   /**
    * Fetches the environment variable TWILIO_DISABLE_DB_SSL. This needs to be
    * set to true if the database doesn't have SSL enabled

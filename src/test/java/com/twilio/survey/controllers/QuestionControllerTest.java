@@ -3,10 +3,13 @@ package com.twilio.survey.controllers;
 import com.twilio.survey.SurveyJavaApplication;
 import com.twilio.survey.models.Question;
 import com.twilio.survey.models.Survey;
+import com.twilio.survey.models.Term;
+import com.twilio.survey.models.Vocabulary;
 import com.twilio.survey.repositories.QuestionRepository;
 import com.twilio.survey.repositories.SurveyRepository;
 import com.twilio.survey.services.QuestionService;
 import com.twilio.survey.services.SurveyService;
+import com.twilio.survey.services.VocabularyService;
 import org.hamcrest.CoreMatchers;
 import org.jdom2.Element;
 import org.junit.Before;
@@ -19,6 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 import static org.hamcrest.CoreMatchers.containsString;
@@ -37,19 +41,24 @@ public class QuestionControllerTest extends BaseControllerTest {
     private QuestionService questionService;
     private SurveyService surveyService;
 
+    @Autowired
+    private VocabularyService vocabularyService;
+
     @Before
     public void before() {
         questionService = new QuestionService(questionRepository);
         surveyService = new SurveyService(surveyRepository);
         questionService.deleteAll();
         surveyService.deleteAll();
+        vocabularyService.deleteAll();
     }
 
     @Test
     public void getNoQuestionCallTest() throws Exception {
         Survey survey1 = surveyService.create(new Survey("New Title", new Date()));
+        final Vocabulary vocabulary = createVocabulary();
 
-        String response = getAsCall("/question?survey=" + survey1.getId() + "&question=1");
+        String response = getAsCall("/question?survey=" + survey1.getId() + "&question=1&vid=" + vocabulary.getId().toString());
 
         assertThat(response, containsString(
                 "<Say>We are sorry, there are no more questions available for this survey. Good bye.</Say>"));
@@ -58,8 +67,9 @@ public class QuestionControllerTest extends BaseControllerTest {
     @Test
     public void getNoQuestionSMSTest() throws Exception {
         Survey survey1 = surveyService.create(new Survey("New Title", new Date()));
+        final Vocabulary vocabulary = createVocabulary();
 
-        String response = getAsSMS("/question?survey=" + survey1.getId() + "&question=1");
+        String response = getAsSMS("/question?survey=" + survey1.getId() + "&question=1&vid=" + vocabulary.getId().toString());
 
         assertThat(response, containsString(
                 "<Message><Body>We are sorry, there are no more questions available for this survey. Good bye" +
@@ -70,8 +80,9 @@ public class QuestionControllerTest extends BaseControllerTest {
     public void getSMSQuestionTest() throws Exception {
         Survey survey1 = surveyService.create(new Survey("New Title", new Date()));
         questionService.save(new Question("Question Body", "Q_TYPE", survey1, new Date()));
+        final Vocabulary vocabulary = createVocabulary();
 
-        String response = getAsSMS("/question?survey=" + survey1.getId() + "&question=1");
+        String response = getAsSMS("/question?survey=" + survey1.getId() + "&question=1&vid=" + vocabulary.getId().toString());
 
         assertThat(response, containsString(
                 "<Message><Body>Question Body</Body></Message>"));
@@ -81,8 +92,9 @@ public class QuestionControllerTest extends BaseControllerTest {
     public void getTextQuestionOnACallWillRecordTest() throws Exception {
         Survey survey1 = surveyService.create(new Survey("Curious Survey", new Date()));
         Question question = questionService.save(new Question("Who are you?", "text", survey1, new Date()));
+        final Vocabulary vocabulary = createVocabulary();
 
-        String response = getAsCall("/question?survey=" + survey1.getId() + "&question=1");
+        String response = getAsCall("/question?survey=" + survey1.getId() + "&question=1&vid=" + vocabulary.getId().toString());
         Element recordVerb = getElement(getDocument(response), "Record");
         String actionURL = "/save_response?qid=" + question.getId();
 
@@ -97,8 +109,9 @@ public class QuestionControllerTest extends BaseControllerTest {
     public void getYesNoQuestionSMSTest() throws Exception {
         Survey survey1 = surveyService.create(new Survey("New Title", new Date()));
         Question question = questionService.save(new Question("Question Body", "yes-no", survey1, new Date()));
+        final Vocabulary vocabulary = createVocabulary();
 
-        String response = getAsSMS("/question?survey=" + survey1.getId() + "&question=1");
+        String response = getAsSMS("/question?survey=" + survey1.getId() + "&question=1&vid=" + vocabulary.getId().toString());
 
         assertThat(response, containsString(
                 "<Message><Body>For the next question, type 1 for yes, and 0 for no. " + question.getBody() +
@@ -109,8 +122,9 @@ public class QuestionControllerTest extends BaseControllerTest {
     public void getYesNoQuestionCallTest() throws Exception {
         Survey survey1 = surveyService.create(new Survey("New Title", new Date()));
         Question question = questionService.save(new Question("Question Body", "yes-no", survey1, new Date()));
+        final Vocabulary vocabulary = createVocabulary();
 
-        String response = getAsCall("/question?survey=" + survey1.getId() + "&question=1");
+        String response = getAsCall("/question?survey=" + survey1.getId() + "&question=1&vid=" + vocabulary.getId().toString());
 
         assertThat(response, containsString(
                 "<Say>For the next question, press 1 for yes, and 0 for no. Then press the pound key.</Say>"));
@@ -118,5 +132,10 @@ public class QuestionControllerTest extends BaseControllerTest {
                 "<Say>" + question.getBody() + "</Say>"));
         assertThat(response, containsString(
                 "<Gather action=\"/save_response?qid=" + question.getId()));
+    }
+
+    protected Vocabulary createVocabulary() throws Exception {
+        final Vocabulary vocabulary = vocabularyService.save(new Vocabulary(new ArrayList<>(), new Date()));
+        return vocabulary;
     }
 }

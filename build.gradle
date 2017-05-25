@@ -40,6 +40,7 @@ dependencies {
     compile("org.flywaydb:flyway-core")
     compile("ch.qos.logback:logback-access:${logbackVersion}")
     compile("ch.qos.logback:logback-classic:${logbackVersion}")
+    compile("org.slf4j:slf4j-api:1.7.25")
     compile("org.springframework.boot:spring-boot-starter-data-jpa")
     compile("org.springframework.boot:spring-boot-starter-jdbc")
     compile("org.springframework.boot:spring-boot-starter-mustache")
@@ -48,13 +49,13 @@ dependencies {
     compile("org.postgresql:postgresql:9.4-1201-jdbc41")
     compile("com.googlecode.json-simple:json-simple")
     compile("com.twilio.sdk:twilio:7.0.0-rc-29")
+    compile("com.mashape.unirest:unirest-java:1.4.6")
     compile("org.springframework.boot:spring-boot-starter-tomcat")
     testCompile("org.springframework.boot:spring-boot-starter-test")
     testCompile("org.apache.httpcomponents:httpclient:4.3.6")
     testCompile("org.apache.httpcomponents:httpasyncclient:4.0.2")
     testCompile("org.apache.httpcomponents:httpmime:4.3.6")
     testCompile("org.json:json:20140107")
-    testCompile("com.mashape.unirest:unirest-java:1.4.6")
     testCompile("org.jdom:jdom:2.0.2")
 }
 
