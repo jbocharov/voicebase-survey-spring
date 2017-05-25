@@ -8,6 +8,7 @@ import com.twilio.survey.repositories.SurveyRepository;
 import com.twilio.survey.services.ResponseService;
 import com.twilio.survey.services.SurveyService;
 import com.twilio.survey.services.TranscriptService;
+import com.twilio.survey.util.CustomVocabularyHighlighter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -98,7 +99,18 @@ public class DisplayController {
 
         final List<Transcript> transcripts = transcriptService.findAllRatedReverseChronological();
 
-        model.put("transcripts", transcripts);
+        // Keeping dirty entities without same makes Hiberate angry...
+        // and we don't want to see Hiberate when it's angry
+        final List<Map<String, Object>> normalizedTranscriptResults = normalizeTranscriptResults(transcripts);
+
+        for (Map<String, Object> transcript: normalizedTranscriptResults) {
+            final String termsList = (String) transcript.get("termsList");
+            final String rawTranscriptText = (String) transcript.get("transcriptText");
+            final String transcriptText = CustomVocabularyHighlighter.highlight(rawTranscriptText, termsList, "<b>", "</b>");
+            transcript.put("transcriptText", transcriptText);
+        }
+
+        model.put("transcripts", normalizedTranscriptResults);
 
         return "demo";
     }
@@ -125,7 +137,17 @@ public class DisplayController {
 
         // Wrk around Hiberate strangeness with responseEntity.put("transcripts", transcripts);
         final int transcriptCount = transcripts.size();
-        List<Map<String, Object>> normalizedTranscriptResults = new ArrayList<>(transcriptCount);
+        List<Map<String, Object>> normalizedTranscriptResults = normalizeTranscriptResults(transcripts);
+
+        responseEntity.put("transcriptCount", transcriptCount);
+        responseEntity.put("transcripts", normalizedTranscriptResults);
+
+        return responseEntity;
+    }
+
+    protected static List<Map<String, Object>> normalizeTranscriptResults(List<Transcript> transcripts) {
+
+        final List<Map<String, Object>> normalizedTranscriptResults = new ArrayList<>();
 
         for (Transcript transcript: transcripts) {
             Map<String, Object> abstractedTranscript = new LinkedHashMap<>();
@@ -133,12 +155,13 @@ public class DisplayController {
             abstractedTranscript.put("novocabText", transcript.getNovocabText());
             abstractedTranscript.put("termsList", transcript.getTermsList());
             abstractedTranscript.put("phoneNumber", transcript.getPhoneNumber());
+            abstractedTranscript.put("rating", transcript.getRating());
+            abstractedTranscript.put("hasRating", transcript.getHasRating());
+            abstractedTranscript.put("date", transcript.getDate());
 
             normalizedTranscriptResults.add(abstractedTranscript);
         }
-        responseEntity.put("transcriptCount", transcriptCount);
-        responseEntity.put("transcripts", normalizedTranscriptResults);
 
-        return responseEntity;
+        return normalizedTranscriptResults;
     }
 }
