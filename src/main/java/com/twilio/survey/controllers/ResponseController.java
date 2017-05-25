@@ -52,7 +52,7 @@ public class ResponseController {
 
         final Response responseEntity = persistResponse(new ResponseParser(currentQuestion, currentParticipant, request).parse());
         final String termString = responseEntity.getResponse();
-        final Term term = termService.save(new Term(termString, currentVocabulary, new Date()));
+        final Term term = termService.save(new Term(termString, 3.0f, currentVocabulary, new Date()));
 
         if (survey.isLastQuestion(currentQuestion)) {
             String message = "Your custom speech engine is ready - give it try! Call us at 415-212-6002 and leave a message that uses your name and the custom terms you provided.";

@@ -1,6 +1,7 @@
 package com.twilio.survey.services;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.twilio.survey.controllers.MessageController;
 import com.twilio.survey.models.Participant;
 import com.twilio.survey.models.Term;
@@ -112,7 +113,20 @@ public class VoiceBaseService {
         final List<String> listOfStringTerms = new ArrayList<String>(terms.size());
 
         for (Term term : terms) {
-            listOfStringTerms.add(term.getTerm());
+            final Float floatWeight = term.getWeight();
+            final String stringWeight = (floatWeight != null)
+                    ? Integer.toString((int) (float) floatWeight)
+                    : null;
+
+            final String stringTerm = (stringWeight == null)
+                    ? term.getTerm()
+                    : term.getTerm() + ";" + stringWeight;
+
+            listOfStringTerms.add(stringTerm);
+        }
+
+        for (String stringTerm : STANDARD_DEMO_TERMS) {
+            listOfStringTerms.add(stringTerm);
         }
 
         return listOfStringTerms;
@@ -121,6 +135,12 @@ public class VoiceBaseService {
     protected VoiceBaseV2BetaUnirestClient voiceBaseClient() {
         return new VoiceBaseV2BetaUnirestClient();
     }
+
+    protected final static List<String> STANDARD_DEMO_TERMS = Lists.newArrayList(
+            "VoiceBase", "Twilio;tweeleeoh;2"
+
+    );
+
 
     private final static Logger logger = LoggerFactory.getLogger(VoiceBaseService.class);
 }

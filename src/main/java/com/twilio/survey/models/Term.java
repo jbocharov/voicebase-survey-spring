@@ -52,6 +52,13 @@ public class Term {
         this.date = date;
     }
 
+    public Term(String term, Float weight, Vocabulary vocabulary, Date date) {
+        this.term = term;
+        this.weight = weight;
+        this.vocabulary = vocabulary;
+        this.date = date;
+    }
+
     public Term(String term, Vocabulary vocabulary, Date date) {
         this.term = term;
         this.vocabulary = vocabulary;
